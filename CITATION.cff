@@ -1,0 +1,43 @@
+cff-version: 1.2.0
+message: "If you use PINK, please cite the paper below."
+title: "PINK: over-correction-aware evaluation of handwritten math OCR"
+repository-code: "https://github.com/9115jin/PINK"
+license: BSD-3-Clause
+authors:
+  - family-names: Seong
+    given-names: Jin
+  - family-names: Liermann
+    given-names: Wencke
+  - family-names: Kim
+    given-names: Minho
+  - family-names: Shin
+    given-names: Jong-hun
+  - family-names: Lim
+    given-names: Soojong
+preferred-citation:
+  type: conference-paper
+  title: "When VLMs 'Fix' Students: Identifying and Penalizing Over-Correction in the Evaluation of Multi-line Handwritten Math OCR"
+  authors:
+    - family-names: Seong
+      given-names: Jin
+    - family-names: Liermann
+      given-names: Wencke
+    - family-names: Kim
+      given-names: Minho
+    - family-names: Shin
+      given-names: Jong-hun
+    - family-names: Lim
+      given-names: Soojong
+  collection-title: "Proceedings of the 2026 Conference on Empirical Methods in Natural Language Processing"
+  publisher:
+    name: "Association for Computational Linguistics"
+  conference:
+    name: "EMNLP 2026"
+    city: Budapest
+    country: HU
+  year: 2026
+  month: 10
+  start: 10932
+  end: 10953
+  doi: "10.18653/2026.emnlp-main.476"
+  url: "https://aclanthology.org/2026.emnlp-main.476/"
