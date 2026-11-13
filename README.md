@@ -25,7 +25,7 @@ pip install "pink-eval[fermat]"
 # latest development version:  pip install "pink-eval[fermat] @ git+https://github.com/9115jin/PINK.git"
 ```
 
-Python ≥ 3.9. `[fermat]` adds the Hugging Face `datasets` package, which you need only to download FERMAT.
+Python ≥ 3.10. `[fermat]` adds the Hugging Face `datasets` package, which you need only to download FERMAT.
 
 ## Quickstart (offline, no API key)
 
