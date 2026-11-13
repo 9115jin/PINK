@@ -68,14 +68,14 @@ The bundled `fermat:gpt-5` oracle grades are the ones behind the paper's results
 
 All commands run requests in parallel (`--workers`), retry failed calls, and resume where they stopped if you re-run them. Already-finished samples are skipped. You can also transcribe with your own pipeline: `pink grade` only needs a JSONL file with `sample_id`, `problem` and `solution` (your transcription).
 
-> **Grade the model and the oracle with the same judge and prompt.** PINK compares the two scores component by component. For any judge other than the bundled one, grade the oracle once and reuse the result for every VLM: `pink grade --judge <judge> --input data/fermat/manifest.jsonl --out runs/oracle_grades.csv`. For this you can export the text without the images: `pink fermat --text-only`.
+> **Grade the model and the oracle with the same judge and prompt.** PINK compares the two scores component by component. For any judge other than the two bundled ones, grade the oracle once and reuse the result for every VLM: `pink grade --judge <judge> --input data/fermat/manifest.jsonl --out runs/oracle_grades.csv`. For this you can export the text without the images: `pink fermat --text-only`.
 
 ### Judges
 
 | `--judge` | Model | Notes |
 |---|---|---|
 | `gpt-5` | `gpt-5-2025-08-07`, reasoning effort `medium` | Main judge in the paper. Uses the OpenAI API with the exact instructions of the paper's runs. Bundled oracle grades: `fermat:gpt-5`. |
-| `qwen3-next-80b` | `Qwen/Qwen3-Next-80B-A3B-Thinking` (temperature 0.6, top-p 0.95) | Open-source judge. VLM-level PINK agrees with GPT-5 at r = 0.99 and Kendall τ = 0.90 (paper App. E). Serve it with [`scripts/serve_qwen3_judge.sh`](https://github.com/9115jin/PINK/blob/main/scripts/serve_qwen3_judge.sh). |
+| `qwen3-next-80b` | `Qwen/Qwen3-Next-80B-A3B-Thinking` (temperature 0.6, top-p 0.95) | Open-source judge. VLM-level PINK agrees with GPT-5 at r = 0.99 and Kendall τ = 0.90 (paper App. E). Serve it with [`scripts/serve_qwen3_judge.sh`](https://github.com/9115jin/PINK/blob/main/scripts/serve_qwen3_judge.sh). Bundled oracle grades: `fermat:qwen3-next-80b`. |
 
 Any other chat model also works, e.g. `--model <name> --base-url <url>`. PINK values are comparable only when they come from the same judge.
 
@@ -84,7 +84,8 @@ To run the open-source judge yourself:
 ```bash
 bash scripts/serve_qwen3_judge.sh                                          # 8x 80GB GPUs (BF16)
 MODEL=Qwen/Qwen3-Next-80B-A3B-Thinking-FP8 TP=4 bash scripts/serve_qwen3_judge.sh   # 4x 48GB GPUs (FP8)
-pink grade --judge qwen3-next-80b --input data/fermat/manifest.jsonl --out runs/oracle_grades_qwen.csv
+pink grade --judge qwen3-next-80b --input runs/qwen7b/ocr.jsonl --out runs/qwen7b/grades_qwen.csv
+pink score --model runs/qwen7b/grades_qwen.csv --oracle fermat:qwen3-next-80b
 ```
 
 The judge reasons for several thousand tokens per sample. If grades fail with `finish_reason=length`, give the server a longer context (`MAX_LEN`, default 16384).
@@ -135,6 +136,7 @@ The printed Table 1 in the paper has the two Pixtral PINK values swapped. The va
 
 - **Prompts.** The OCR prompt (`pink.ocr.PROMPTS["default"]`) is Fig. 18. `--prompt faithful` selects the faithfulness-instructed variant from Fig. 19 (App. F).
 - **Judge prompts.** The `gpt-5` preset sends `pink.rubric.GPT5_PAPER_INSTRUCTIONS`, byte-for-byte the instructions of the paper's GPT-5 runs: the rubric and output format of Fig. 16, without its "Grading Guidelines" block. The `qwen3-next-80b` preset and custom judges use the full Fig. 16 prompt (`pink.rubric.GRADING_INSTRUCTIONS`).
+- **Bundled oracle grades.** `fermat:gpt-5` contains the GPT-5 oracle grades from the paper. `fermat:qwen3-next-80b` was graded with this package's `qwen3-next-80b` preset: official FP8 weights, vLLM 0.13.0, `--max-model-len 16384`, all 2,244 samples graded. Its sample-level agreement with GPT-5 is r = 0.78, the same as reported in the paper.
 - **Oracle transcription.** We use FERMAT's `pert_a` (the student's erroneous solution) and remove its `\textcolor{red}{…}` error markers. Otherwise the judge would see where the error is.
 - **Formula.** PINK = Σ<sub>n</sub> S<sub>penalized,n</sub> / Σ<sub>n</sub> S<sub>oracle,n</sub> (paper Eq. 4). Here S<sub>oracle,n</sub> is the sum of the oracle's component scores. A transcription that scores the same as the oracle gets exactly 1.0. Samples that the judge could not grade are left out (`--missing zero` counts them as 0 instead).
 

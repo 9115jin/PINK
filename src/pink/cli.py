@@ -148,7 +148,7 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--model", required=True, help="grades of the VLM transcriptions")
     s.add_argument("--oracle", required=True,
                    help="grades of the oracle transcriptions from the same judge, or a bundled set: "
-                        "fermat:gpt-5 (the paper's GPT-5 oracle grades)")
+                        "fermat:gpt-5 or fermat:qwen3-next-80b")
     s.add_argument("--threshold", type=float, default=10.0, help="minor/major boundary T (default 10)")
     s.add_argument("--missing", choices=["drop", "zero"], default="drop",
                    help="oracle samples without a model grade: drop them (paper) or score them 0")

@@ -38,7 +38,7 @@ def penalize(model_scores, oracle_scores, threshold: float = DEFAULT_THRESHOLD) 
 
 
 #: Oracle grades shipped with the package: ``fermat:<judge>``.
-PACKAGED_ORACLES = ("fermat:gpt-5",)
+PACKAGED_ORACLES = ("fermat:gpt-5", "fermat:qwen3-next-80b")
 
 
 def packaged_oracle(name: str) -> Path:

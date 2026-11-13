@@ -23,6 +23,7 @@ TP="${TP:-8}"
 PORT="${PORT:-8000}"
 MAX_LEN="${MAX_LEN:-16384}"
 GPU_UTIL="${GPU_UTIL:-0.75}"
+MAX_SEQS="${MAX_SEQS:-8}"   # concurrent requests; 32 worked on 4x L40S (FP8) at MAX_LEN=16384
 export NCCL_P2P_DISABLE="${NCCL_P2P_DISABLE:-1}"
 
 exec vllm serve "${MODEL}" \
@@ -30,5 +31,5 @@ exec vllm serve "${MODEL}" \
   --tensor-parallel-size "${TP}" \
   --max-model-len "${MAX_LEN}" \
   --gpu-memory-utilization "${GPU_UTIL}" \
-  --max-num-seqs 8 \
+  --max-num-seqs "${MAX_SEQS}" \
   --port "${PORT}"

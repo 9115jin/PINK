@@ -74,3 +74,11 @@ def test_bundled_fermat_gpt5_oracle():
     assert len(oracle) == 2244 and list(oracle.columns) == SCORE_COLUMNS
     assert oracle.sum(axis=1).mean() == pytest.approx(71.3, abs=0.05)  # paper Sec. 4: perturbed solutions average 71.3
     assert compute_pink(oracle.copy(), "fermat:gpt-5").pink == pytest.approx(1.0)
+
+
+def test_bundled_fermat_qwen3_oracle():
+    from pink import load_grades
+
+    oracle = load_grades("fermat:qwen3-next-80b")
+    assert len(oracle) == 2244 and list(oracle.columns) == SCORE_COLUMNS
+    assert set(oracle.index) == set(load_grades("fermat:gpt-5").index)

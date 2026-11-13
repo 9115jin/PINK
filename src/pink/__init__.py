@@ -4,7 +4,7 @@ Seong et al., "When VLMs 'Fix' Students: Identifying and Penalizing Over-Correct
 the Evaluation of Multi-line Handwritten Math OCR", EMNLP 2026.
 """
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 
 from .judge import JUDGE_PRESETS, JudgeConfig, grade, judge_from_preset
 from .rubric import GPT5_PAPER_INSTRUCTIONS, GRADING_INSTRUCTIONS, RUBRIC_ITEMS, SCORE_COLUMNS
