@@ -37,12 +37,29 @@ def penalize(model_scores, oracle_scores, threshold: float = DEFAULT_THRESHOLD) 
     return np.where(delta <= 0, m, np.where(delta <= threshold, o, 0.0))
 
 
+#: Oracle grades shipped with the package: ``fermat:<judge>``.
+PACKAGED_ORACLES = ("fermat:gpt-5",)
+
+
+def packaged_oracle(name: str) -> Path:
+    """Path of a bundled oracle grade file, e.g. ``packaged_oracle("fermat:gpt-5")``."""
+    from importlib.resources import files
+
+    if name not in PACKAGED_ORACLES:
+        raise ValueError(f"unknown bundled oracle {name!r}; available: {list(PACKAGED_ORACLES)}")
+    dataset, judge = name.split(":", 1)
+    return Path(str(files("pink") / "resources" / "oracle_grades" / f"{dataset}_{judge}.csv"))
+
+
 def load_grades(path: PathLike) -> pd.DataFrame:
-    """Load a grade file written by ``pink grade`` (CSV or JSONL).
+    """Load a grade file written by ``pink grade`` (CSV or JSONL), or a bundled oracle
+    such as ``"fermat:gpt-5"``.
 
     Returns successfully graded rows, indexed by ``sample_id``, with one column per
     rubric component (see :data:`pink.rubric.SCORE_COLUMNS`).
     """
+    if isinstance(path, str) and path.startswith("fermat:"):
+        path = packaged_oracle(path)
     path = Path(path)
     if path.suffix == ".jsonl":
         df = pd.read_json(path, lines=True, dtype={"sample_id": str})

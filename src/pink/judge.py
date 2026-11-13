@@ -15,6 +15,7 @@ from dataclasses import dataclass, field, replace
 from typing import Any, Dict, List, Optional, Tuple
 
 from .rubric import (
+    GPT5_PAPER_INSTRUCTIONS,
     GRADING_INSTRUCTIONS,
     JUSTIFICATION_COLUMNS,
     POINTS_PER_ITEM,
@@ -40,14 +41,18 @@ class JudgeConfig:
     max_tokens: Optional[int] = None
     reasoning_effort: Optional[str] = None  #: OpenAI reasoning models only
     extra_body: Dict[str, Any] = field(default_factory=dict)
+    instructions: str = GRADING_INSTRUCTIONS  #: system prompt (rubric) sent to the judge
     max_attempts: int = 5                   #: retries when the response cannot be parsed
     timeout: float = 600.0
 
 
-#: Judges used in the paper. ``gpt-5`` is the main judge; ``qwen3-next-80b`` is the
-#: open-source judge (r=0.99 / Kendall tau=0.90 with GPT-5 at the VLM level, App. E.1).
+#: Judges used in the paper. ``gpt-5`` is the main judge and uses the exact instructions
+#: of the paper's GPT-5 runs, so its grades match the bundled ``fermat:gpt-5`` oracle
+#: grades and the paper's leaderboard. ``qwen3-next-80b`` is the open-source judge
+#: (r=0.99 / Kendall tau=0.90 with GPT-5 at the VLM level, App. E.1) with the Fig. 16 prompt.
 JUDGE_PRESETS: Dict[str, JudgeConfig] = {
-    "gpt-5": JudgeConfig(model="gpt-5-2025-08-07", reasoning_effort="medium"),
+    "gpt-5": JudgeConfig(model="gpt-5-2025-08-07", reasoning_effort="medium",
+                         instructions=GPT5_PAPER_INSTRUCTIONS),
     "qwen3-next-80b": JudgeConfig(
         model="Qwen/Qwen3-Next-80B-A3B-Thinking",
         base_url="http://localhost:8000/v1",
@@ -167,14 +172,14 @@ def _request_kwargs(cfg: JudgeConfig) -> Dict[str, Any]:
 
 
 def grade(client, cfg: JudgeConfig, problem: str, solution: str, sample_id: str = "",
-          instructions: str = GRADING_INSTRUCTIONS) -> Dict[str, Any]:
+          instructions: Optional[str] = None) -> Dict[str, Any]:
     """Grade one solution. Returns a grade-file row (see :data:`SCORE_COLUMNS`)."""
     row: Dict[str, Any] = {"sample_id": sample_id, "success": False, "total_score": None}
     if not str(solution or "").strip():
         row["error"] = "empty solution"
         return row
     messages = [
-        {"role": "system", "content": instructions},
+        {"role": "system", "content": instructions or cfg.instructions},
         {"role": "user", "content": build_user_message(problem, solution)},
     ]
     error = ""

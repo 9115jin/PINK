@@ -104,3 +104,15 @@ def test_truncated_response_gets_actionable_error():
     client.chat.completions.create = lambda **kw: truncated
     row = grade(client, JudgeConfig(model="m", base_url="http://x/v1", max_attempts=1), "P", "S")
     assert not row["success"] and "finish_reason=length" in row["error"] and "max-model-len" in row["error"]
+
+
+def test_presets_use_their_paper_instructions():
+    from pink.rubric import GPT5_PAPER_INSTRUCTIONS, GRADING_INSTRUCTIONS
+
+    gpt5 = judge_from_preset("gpt-5")
+    assert gpt5.instructions == GPT5_PAPER_INSTRUCTIONS and "Grading Guidelines" not in GPT5_PAPER_INSTRUCTIONS
+    assert "## Rubric" in GPT5_PAPER_INSTRUCTIONS and "## Output Format" in GPT5_PAPER_INSTRUCTIONS
+    assert judge_from_preset("qwen3-next-80b").instructions == GRADING_INSTRUCTIONS
+    client = FakeClient([json.dumps(GOOD)])
+    grade(client, gpt5, "P", "S")
+    assert client.calls[0]["messages"][0]["content"] == GPT5_PAPER_INSTRUCTIONS

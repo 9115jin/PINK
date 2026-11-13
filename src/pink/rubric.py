@@ -82,6 +82,18 @@ You are a math exam grader. Evaluate the student solution using the provided rub
   "total": <integer>
 }"""
 
+def _resource_text(name: str) -> str:
+    from importlib.resources import files
+
+    return (files("pink") / "resources" / name).read_text(encoding="utf-8")
+
+
+#: The exact instructions sent to GPT-5 in the paper's grading runs (Table 1 and the
+#: bundled ``fermat:gpt-5`` oracle grades), kept byte-for-byte, including stray quote
+#: characters from the rubric file. It is the rubric and output format of Fig. 16,
+#: without the "Grading Guidelines" block.
+GPT5_PAPER_INSTRUCTIONS: str = _resource_text("gpt5_paper_instructions.txt")
+
 #: User message for the LLM judge. ``solution`` is the text being graded
 #: (an OCR transcription, or the oracle transcription of the student's work).
 USER_TEMPLATE: str = (

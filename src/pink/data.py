@@ -62,18 +62,20 @@ def load_fermat(split: str = "train", cache_dir: Optional[str] = None):
 
 
 def export_fermat(out_dir, limit: Optional[int] = None, ids: Optional[List[str]] = None,
-                  cache_dir: Optional[str] = None, seed: int = 0) -> Path:
+                  cache_dir: Optional[str] = None, seed: int = 0, images: bool = True) -> Path:
     """Write ``images/`` and ``manifest.jsonl`` to ``out_dir``.
 
     Each manifest line holds ``sample_id``, ``image`` (relative path), ``problem`` (the
     question text given to the judge) and ``solution`` (the oracle transcription), plus a
     few FERMAT metadata fields. The manifest itself is the oracle input for ``pink grade``.
     With ``limit``, a random subset (fixed ``seed``) is exported instead of the full set.
+    ``images=False`` writes only the manifest (enough for grading the oracle).
     """
     from ._runner import write_jsonl
 
     out_dir = Path(out_dir)
-    (out_dir / "images").mkdir(parents=True, exist_ok=True)
+    if images:
+        (out_dir / "images").mkdir(parents=True, exist_ok=True)
     ds = load_fermat(cache_dir=cache_dir)
     if ids:
         wanted = set(ids)
@@ -86,7 +88,8 @@ def export_fermat(out_dir, limit: Optional[int] = None, ids: Optional[List[str]]
         sid = r["new_custom_id"]
         img = r["image"]
         rel = f"images/{sid}{_image_ext(img['bytes'], img.get('path'))}"
-        (out_dir / rel).write_bytes(img["bytes"])
+        if images:
+            (out_dir / rel).write_bytes(img["bytes"])
         rows.append({
             "sample_id": sid,
             "image": rel,

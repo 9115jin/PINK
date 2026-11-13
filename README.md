@@ -52,28 +52,29 @@ FERMAT ([Nath et al., 2025](https://aclanthology.org/2025.acl-long.720/)) contai
 # 1) Download FERMAT. Writes images/ and manifest.jsonl (problem + oracle transcription per sample).
 pink fermat --out-dir data/fermat                 # add --limit 20 for a quick try
 
-# 2) Grade the oracle transcriptions. Do this once per judge and reuse the result for every VLM.
-export OPENAI_API_KEY=...
-pink grade --judge gpt-5 --input data/fermat/manifest.jsonl --out runs/oracle_grades.csv
-
-# 3) Transcribe the images with your VLM. Any OpenAI-compatible endpoint works, e.g. `vllm serve`.
+# 2) Transcribe the images with your VLM. Any OpenAI-compatible endpoint works, e.g. `vllm serve`.
 pink ocr --manifest data/fermat/manifest.jsonl --model Qwen/Qwen2.5-VL-7B-Instruct \
          --base-url http://localhost:8000/v1 --out runs/qwen7b/ocr.jsonl
 
-# 4) Grade the transcriptions with the same judge, then score.
+# 3) Grade the transcriptions with the GPT-5 judge.
+export OPENAI_API_KEY=...
 pink grade --judge gpt-5 --input runs/qwen7b/ocr.jsonl --out runs/qwen7b/grades.csv
-pink score --model runs/qwen7b/grades.csv --oracle runs/oracle_grades.csv
+
+# 4) Score them against the paper's GPT-5 oracle grades, which ship with the package.
+pink score --model runs/qwen7b/grades.csv --oracle fermat:gpt-5
 ```
+
+The bundled `fermat:gpt-5` oracle grades are the ones behind the paper's results. With `--judge gpt-5`, your PINK is directly comparable to the [FERMAT results](#fermat-results-gpt-5-judge-paper-table-1) below, and you only pay for grading your own model's transcriptions.
 
 All commands run requests in parallel (`--workers`), retry failed calls, and resume where they stopped if you re-run them. Already-finished samples are skipped. You can also transcribe with your own pipeline: `pink grade` only needs a JSONL file with `sample_id`, `problem` and `solution` (your transcription).
 
-> **Always grade the model and the oracle with the same judge and prompt.** PINK compares the two scores component by component.
+> **Grade the model and the oracle with the same judge and prompt.** PINK compares the two scores component by component. For any judge other than the bundled one, grade the oracle once and reuse the result for every VLM: `pink grade --judge <judge> --input data/fermat/manifest.jsonl --out runs/oracle_grades.csv`. For this you can export the text without the images: `pink fermat --text-only`.
 
 ### Judges
 
 | `--judge` | Model | Notes |
 |---|---|---|
-| `gpt-5` | `gpt-5-2025-08-07`, reasoning effort `medium` | Main judge in the paper. Uses the OpenAI API. |
+| `gpt-5` | `gpt-5-2025-08-07`, reasoning effort `medium` | Main judge in the paper. Uses the OpenAI API with the exact instructions of the paper's runs. Bundled oracle grades: `fermat:gpt-5`. |
 | `qwen3-next-80b` | `Qwen/Qwen3-Next-80B-A3B-Thinking` (temperature 0.6, top-p 0.95) | Open-source judge. VLM-level PINK agrees with GPT-5 at r = 0.99 and Kendall τ = 0.90 (paper App. E). Serve it with [`scripts/serve_qwen3_judge.sh`](https://github.com/9115jin/PINK/blob/main/scripts/serve_qwen3_judge.sh). |
 
 Any other chat model also works, e.g. `--model <name> --base-url <url>`. PINK values are comparable only when they come from the same judge.
@@ -127,12 +128,13 @@ penalize(model_scores=[20, 20, 12], oracle_scores=[20, 5, 10])  # -> [20, 0, 10]
 | 14 | Pixtral 12B | 0.722 | 43.9% |
 | 15 | Llama 3.2 11B Vision | 0.676 | 42.1% |
 
-Over-correction rate = share of transcriptions with at least one over-corrected rubric component (paper Fig. 14).
+Over-correction rate = share of transcriptions with at least one over-corrected rubric component (paper Fig. 14). `pink score` recomputes these numbers from the paper's grade files with `--oracle fermat:gpt-5` (max. difference 5e-5).
 The printed Table 1 in the paper has the two Pixtral PINK values swapped. The values above are the correct ones, consistent with Figures 3, 6 and 15 of the paper.
 
 ## Notes
 
-- **Prompts.** The judge prompt (`pink.rubric.GRADING_INSTRUCTIONS`) is the one shown in paper Fig. 16. The OCR prompt (`pink.ocr.PROMPTS["default"]`) is Fig. 18. `--prompt faithful` selects the faithfulness-instructed variant from Fig. 19 (App. F).
+- **Prompts.** The OCR prompt (`pink.ocr.PROMPTS["default"]`) is Fig. 18. `--prompt faithful` selects the faithfulness-instructed variant from Fig. 19 (App. F).
+- **Judge prompts.** The `gpt-5` preset sends `pink.rubric.GPT5_PAPER_INSTRUCTIONS`, byte-for-byte the instructions of the paper's GPT-5 runs: the rubric and output format of Fig. 16, without its "Grading Guidelines" block. The `qwen3-next-80b` preset and custom judges use the full Fig. 16 prompt (`pink.rubric.GRADING_INSTRUCTIONS`).
 - **Oracle transcription.** We use FERMAT's `pert_a` (the student's erroneous solution) and remove its `\textcolor{red}{…}` error markers. Otherwise the judge would see where the error is.
 - **Formula.** PINK = Σ<sub>n</sub> S<sub>penalized,n</sub> / Σ<sub>n</sub> S<sub>oracle,n</sub> (paper Eq. 4). Here S<sub>oracle,n</sub> is the sum of the oracle's component scores. A transcription that scores the same as the oracle gets exactly 1.0. Samples that the judge could not grade are left out (`--missing zero` counts them as 0 instead).
 
@@ -172,4 +174,4 @@ If you evaluate on FERMAT, please also cite the dataset:
 ## License
 
 Code: [BSD-3-Clause](https://github.com/9115jin/PINK/blob/main/LICENSE), © 2026 Electronics and Telecommunications Research Institute (ETRI).
-The example grade files in `examples/sample/` contain judge justifications that quote FERMAT samples; FERMAT is © its authors and licensed under CC-BY-4.0.
+The bundled oracle grades (`src/pink/resources/oracle_grades/`) are judge scores of FERMAT samples. The example grade files in `examples/sample/` also contain judge justifications that quote FERMAT samples. FERMAT is © its authors and licensed under CC-BY-4.0.

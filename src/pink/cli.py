@@ -33,10 +33,12 @@ def _check_endpoint(client, base_url: Optional[str], model: str) -> None:
 def cmd_fermat(args: argparse.Namespace) -> int:
     from .data import export_fermat
 
-    manifest = export_fermat(args.out_dir, limit=args.limit, cache_dir=args.cache_dir, seed=args.seed)
+    manifest = export_fermat(args.out_dir, limit=args.limit, cache_dir=args.cache_dir, seed=args.seed,
+                             images=not args.text_only)
     n = sum(1 for _ in open(manifest, encoding="utf-8"))
     print(f"wrote {n} samples -> {manifest}")
-    print(f"next: grade the oracle once per judge, e.g.\n  pink grade --input {manifest} --out oracle_grades.csv")
+    print(f"next: transcribe the images with your VLM, e.g.\n  pink ocr --manifest {manifest} --model <vlm> "
+          "--base-url <url> --out ocr.jsonl")
     return 0
 
 
@@ -108,6 +110,7 @@ def build_parser() -> argparse.ArgumentParser:
     f.add_argument("--out-dir", required=True)
     f.add_argument("--limit", type=int, help="export a random subset of N samples (for a quick try)")
     f.add_argument("--seed", type=int, default=0, help="seed for the --limit subset")
+    f.add_argument("--text-only", action="store_true", help="skip the images (enough to grade the oracle)")
     f.add_argument("--cache-dir", help="Hugging Face datasets cache directory")
     f.set_defaults(func=cmd_fermat)
 
@@ -143,7 +146,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     s = sub.add_parser("score", help="compute PINK from model and oracle grades")
     s.add_argument("--model", required=True, help="grades of the VLM transcriptions")
-    s.add_argument("--oracle", required=True, help="grades of the oracle transcriptions (same judge!)")
+    s.add_argument("--oracle", required=True,
+                   help="grades of the oracle transcriptions from the same judge, or a bundled set: "
+                        "fermat:gpt-5 (the paper's GPT-5 oracle grades)")
     s.add_argument("--threshold", type=float, default=10.0, help="minor/major boundary T (default 10)")
     s.add_argument("--missing", choices=["drop", "zero"], default="drop",
                    help="oracle samples without a model grade: drop them (paper) or score them 0")

@@ -64,3 +64,13 @@ def test_pink_table_columns():
     t = pink_table(frame([[20] * 5]), frame([[10] * 5]))
     assert {"model_total", "oracle_total", "penalized_total", "over_corrected"} <= set(t.columns)
     assert t["penalized_total"].iloc[0] == 50
+
+
+def test_bundled_fermat_gpt5_oracle():
+    from pink import PACKAGED_ORACLES, load_grades
+
+    assert "fermat:gpt-5" in PACKAGED_ORACLES
+    oracle = load_grades("fermat:gpt-5")
+    assert len(oracle) == 2244 and list(oracle.columns) == SCORE_COLUMNS
+    assert oracle.sum(axis=1).mean() == pytest.approx(71.3, abs=0.05)  # paper Sec. 4: perturbed solutions average 71.3
+    assert compute_pink(oracle.copy(), "fermat:gpt-5").pink == pytest.approx(1.0)
