@@ -66,8 +66,11 @@ PROMPTS: Dict[str, Tuple[str, str]] = {
 
 
 def clean_transcription(text: Any) -> str:
-    """Strip markdown fences and the **Question:** / **Answer:** labels from a raw VLM output."""
+    """Strip reasoning traces, markdown fences and the **Question:** / **Answer:** labels from a raw VLM output."""
     text = "" if text is None else str(text)
+    if "</think>" in text:  # reasoning models: keep only the final answer
+        text = text.rsplit("</think>", 1)[1]
+    text = re.sub(r"<think>[\s\S]*?(</think>|$)", "", text)
     text = re.sub(r"^\s*```[a-zA-Z]*\s*\n?", "", text)
     text = re.sub(r"\n?```\s*$", "", text)
     text = re.sub(r"\*\*(Question|Answer):\*\*[ \t]*", "", text)
@@ -90,14 +93,20 @@ def make_client(base_url: Optional[str] = None, api_key: Optional[str] = None, t
 
 
 def transcribe(client, model: str, image_path, prompt: str = "default", max_tokens: Optional[int] = 4096,
-               temperature: Optional[float] = 0.0) -> str:
-    """Transcribe one image and return the raw model output."""
+               temperature: Optional[float] = 0.0, extra_body: Optional[Dict[str, Any]] = None) -> str:
+    """Transcribe one image and return the raw model output.
+
+    ``extra_body`` is passed through to the endpoint, e.g.
+    ``{"chat_template_kwargs": {"enable_thinking": False}}`` for hybrid reasoning models on vLLM.
+    """
     system, user = PROMPTS[prompt]
     kwargs: Dict[str, Any] = {}
     if max_tokens is not None:
         kwargs["max_tokens"] = max_tokens
     if temperature is not None:
         kwargs["temperature"] = temperature
+    if extra_body:
+        kwargs["extra_body"] = extra_body
     resp = client.chat.completions.create(
         model=model,
         messages=[

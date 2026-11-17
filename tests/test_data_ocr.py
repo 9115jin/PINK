@@ -17,3 +17,9 @@ def test_clean_transcription():
     raw = "```latex\n**Question:** Solve $x+1=2$.\n**Answer:** $x=1$\n```"
     assert clean_transcription(raw) == "Solve $x+1=2$.\n$x=1$"
     assert clean_transcription(None) == ""
+
+
+def test_clean_transcription_drops_reasoning():
+    assert clean_transcription("<think>2+2 is 4, but she wrote 5</think>\n**Answer:** 2+2=5") == "2+2=5"
+    assert clean_transcription("hmm let me read...</think>**Answer:** x=1") == "x=1"
+    assert clean_transcription("<think>never closed") == ""

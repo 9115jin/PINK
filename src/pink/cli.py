@@ -50,8 +50,9 @@ def cmd_ocr(args: argparse.Namespace) -> int:
     image_dir = args.image_dir or Path(args.manifest).parent
     client = make_client(args.base_url, args.api_key)
     _check_endpoint(client, args.base_url, args.model)
+    extra_body = json.loads(args.extra_body) if args.extra_body else None
     fn = partial(transcribe_row, client, args.model, image_dir=image_dir, prompt=args.prompt,
-                 max_tokens=args.max_tokens, temperature=args.temperature)
+                 max_tokens=args.max_tokens, temperature=args.temperature, extra_body=extra_body)
     stats = run_jobs(items, fn, args.out, workers=args.workers, resume=not args.overwrite, desc=f"ocr:{args.model}")
     print(json.dumps(stats))
     return 0 if stats["failed"] == 0 else 1
@@ -123,6 +124,7 @@ def build_parser() -> argparse.ArgumentParser:
     o.add_argument("--prompt", choices=["default", "faithful"], default="default")
     o.add_argument("--max-tokens", type=int, default=4096)
     o.add_argument("--temperature", type=float, default=0.0)
+    o.add_argument("--extra-body", help='JSON passed to the endpoint, e.g. \'{"chat_template_kwargs": {"enable_thinking": false}}\'')
     o.add_argument("--workers", type=int, default=8)
     o.add_argument("--limit", type=int)
     o.add_argument("--overwrite", action="store_true", help="start from scratch instead of resuming")
