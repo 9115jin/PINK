@@ -90,6 +90,18 @@ pink score --model runs/qwen7b/grades_qwen.csv --oracle fermat:qwen3-next-80b
 
 The judge reasons for several thousand tokens per sample. If grades fail with `finish_reason=length`, give the server a longer context (`MAX_LEN`, default 16384).
 
+### With lmms-eval
+
+FERMAT-PINK is a built-in task of [lmms-eval](https://github.com/EvolvingLMMs-Lab/lmms-eval) (`fermat_pink`). Until it ships in an lmms-eval release, install lmms-eval from its `main` branch.
+
+```bash
+pip install pink-eval
+export OPENAI_API_KEY=...            # default judge: GPT-5, scored against the bundled fermat:gpt-5 oracle grades
+python -m lmms_eval --model qwen2_5_vl --model_args pretrained=Qwen/Qwen2.5-VL-7B-Instruct --tasks fermat_pink
+```
+
+The task reports `pink`, `over_correction_rate` and `raw_score_ratio`. To use the open-source judge, set `PINK_JUDGE=qwen3-next-80b PINK_JUDGE_BASE_URL=http://localhost:8000/v1`. See the [task README](https://github.com/EvolvingLMMs-Lab/lmms-eval/tree/main/lmms_eval/tasks/fermat_pink) for all options.
+
 ## Use PINK on your own data
 
 PINK is not tied to FERMAT. For each sample you need the **problem**, the **oracle transcription** (what is actually written) and the **model transcription**:
