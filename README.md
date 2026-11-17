@@ -4,9 +4,17 @@
 <br>Jin Seong\*, Wencke Liermann\*, Minho Kim, Jong-hun Shin, Soojong Lim · *EMNLP 2026 (Main, Oral)*
 
 [![Paper](https://img.shields.io/badge/Paper-ACL%20Anthology-red)](https://aclanthology.org/2026.emnlp-main.476/)
+[![arXiv](https://img.shields.io/badge/arXiv-2604.22774-b31b1b.svg)](https://arxiv.org/abs/2604.22774)
+[![HF Papers](https://img.shields.io/badge/%F0%9F%A4%97-Paper%20Page-yellow)](https://huggingface.co/papers/2604.22774)
+[![lmms-eval](https://img.shields.io/badge/lmms--eval-fermat__pink-green)](https://github.com/EvolvingLMMs-Lab/lmms-eval/tree/main/lmms_eval/tasks/fermat_pink)
 [![PyPI](https://img.shields.io/pypi/v/pink-eval)](https://pypi.org/project/pink-eval/)
 [![Tests](https://github.com/9115jin/PINK/actions/workflows/tests.yml/badge.svg)](https://github.com/9115jin/PINK/actions/workflows/tests.yml)
 [![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD--3--Clause-blue.svg)](https://github.com/9115jin/PINK/blob/main/LICENSE)
+
+## News
+
+- **2026-11**: FERMAT-PINK is a built-in task of [lmms-eval](https://github.com/EvolvingLMMs-Lab/lmms-eval) (`--tasks fermat_pink`). The paper's GPT-5 and Qwen3 oracle grades now ship with `pip install pink-eval`.
+- **2026-10**: The paper was presented as an oral at EMNLP 2026 (Budapest).
 
 Vision-language models transcribing a student's handwritten solution often **“fix” the student's mistakes** instead of copying them. The transcription looks good, and string metrics like BLEU barely notice it. But the error a teacher or tutoring system needed to see is gone. We call this **over-correction**. Across 15 VLMs, 42–66% of transcriptions contain at least one over-correction.
 
