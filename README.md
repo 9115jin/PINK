@@ -74,6 +74,8 @@ pink score --model runs/qwen7b/grades.csv --oracle fermat:gpt-5
 
 The bundled `fermat:gpt-5` oracle grades are the ones behind the paper's results. With `--judge gpt-5`, your PINK is directly comparable to the [FERMAT results](#fermat-results-gpt-5-judge-paper-table-1) below, and you only pay for grading your own model's transcriptions.
 
+Dedicated OCR models usually expect their own prompt. Pass it with `--user-prompt` (and `--system-prompt ''` to send no system message); add `--image-first` if the model expects the image before the text. Leading YAML front matter, as written by olmOCR, is removed before grading.
+
 For hybrid reasoning models (e.g. Qwen3.5 or Qwen3.8 on vLLM), add `--extra-body '{"chat_template_kwargs": {"enable_thinking": false}}'` to `pink ocr` to transcribe without a reasoning trace. Any `<think>…</think>` block left in an output is removed before grading.
 
 All commands run requests in parallel (`--workers`), retry failed calls, and resume where they stopped if you re-run them. Already-finished samples are skipped. You can also transcribe with your own pipeline: `pink grade` only needs a JSONL file with `sample_id`, `problem` and `solution` (your transcription).

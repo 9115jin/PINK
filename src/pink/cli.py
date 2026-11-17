@@ -52,7 +52,8 @@ def cmd_ocr(args: argparse.Namespace) -> int:
     _check_endpoint(client, args.base_url, args.model)
     extra_body = json.loads(args.extra_body) if args.extra_body else None
     fn = partial(transcribe_row, client, args.model, image_dir=image_dir, prompt=args.prompt,
-                 max_tokens=args.max_tokens, temperature=args.temperature, extra_body=extra_body)
+                 max_tokens=args.max_tokens, temperature=args.temperature, extra_body=extra_body,
+                 system_prompt=args.system_prompt, user_prompt=args.user_prompt, image_first=args.image_first)
     stats = run_jobs(items, fn, args.out, workers=args.workers, resume=not args.overwrite, desc=f"ocr:{args.model}")
     print(json.dumps(stats))
     return 0 if stats["failed"] == 0 else 1
@@ -122,6 +123,9 @@ def build_parser() -> argparse.ArgumentParser:
     o.add_argument("--base-url", help="e.g. http://localhost:8000/v1 for `vllm serve` (default: OpenAI API)")
     o.add_argument("--api-key")
     o.add_argument("--prompt", choices=["default", "faithful"], default="default")
+    o.add_argument("--user-prompt", help="custom user prompt, e.g. the native prompt of a dedicated OCR model")
+    o.add_argument("--system-prompt", help="custom system prompt ('' sends no system message)")
+    o.add_argument("--image-first", action="store_true", help="put the image before the text in the user turn")
     o.add_argument("--max-tokens", type=int, default=4096)
     o.add_argument("--temperature", type=float, default=0.0)
     o.add_argument("--extra-body", help='JSON passed to the endpoint, e.g. \'{"chat_template_kwargs": {"enable_thinking": false}}\'')

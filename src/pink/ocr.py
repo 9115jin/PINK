@@ -71,6 +71,7 @@ def clean_transcription(text: Any) -> str:
     if "</think>" in text:  # reasoning models: keep only the final answer
         text = text.rsplit("</think>", 1)[1]
     text = re.sub(r"<think>[\s\S]*?(</think>|$)", "", text)
+    text = re.sub(r"^\s*---\n(?:[A-Za-z_][\w-]*:.*\n)+---\n?", "", text)  # YAML front matter (e.g. olmOCR)
     text = re.sub(r"^\s*```[a-zA-Z]*\s*\n?", "", text)
     text = re.sub(r"\n?```\s*$", "", text)
     text = re.sub(r"\*\*(Question|Answer):\*\*[ \t]*", "", text)
@@ -93,13 +94,22 @@ def make_client(base_url: Optional[str] = None, api_key: Optional[str] = None, t
 
 
 def transcribe(client, model: str, image_path, prompt: str = "default", max_tokens: Optional[int] = 4096,
-               temperature: Optional[float] = 0.0, extra_body: Optional[Dict[str, Any]] = None) -> str:
+               temperature: Optional[float] = 0.0, extra_body: Optional[Dict[str, Any]] = None,
+               system_prompt: Optional[str] = None, user_prompt: Optional[str] = None,
+               image_first: bool = False) -> str:
     """Transcribe one image and return the raw model output.
 
     ``extra_body`` is passed through to the endpoint, e.g.
     ``{"chat_template_kwargs": {"enable_thinking": False}}`` for hybrid reasoning models on vLLM.
+    ``system_prompt`` / ``user_prompt`` override the paper prompt (an empty system prompt sends no system
+    message), e.g. to use the native prompt of a dedicated OCR model; ``image_first`` puts the image before
+    the text in the user turn, as most OCR models expect.
     """
     system, user = PROMPTS[prompt]
+    if system_prompt is not None:
+        system = system_prompt
+    if user_prompt is not None:
+        user = user_prompt
     kwargs: Dict[str, Any] = {}
     if max_tokens is not None:
         kwargs["max_tokens"] = max_tokens
@@ -107,17 +117,12 @@ def transcribe(client, model: str, image_path, prompt: str = "default", max_toke
         kwargs["temperature"] = temperature
     if extra_body:
         kwargs["extra_body"] = extra_body
-    resp = client.chat.completions.create(
-        model=model,
-        messages=[
-            {"role": "system", "content": system},
-            {"role": "user", "content": [
-                {"type": "text", "text": user},
-                {"type": "image_url", "image_url": {"url": image_to_data_url(image_path)}},
-            ]},
-        ],
-        **kwargs,
-    )
+    parts = [{"type": "text", "text": user},
+             {"type": "image_url", "image_url": {"url": image_to_data_url(image_path)}}]
+    if image_first:
+        parts.reverse()
+    messages = ([{"role": "system", "content": system}] if system else []) + [{"role": "user", "content": parts}]
+    resp = client.chat.completions.create(model=model, messages=messages, **kwargs)
     return resp.choices[0].message.content or ""
 
 

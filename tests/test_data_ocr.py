@@ -23,3 +23,25 @@ def test_clean_transcription_drops_reasoning():
     assert clean_transcription("<think>2+2 is 4, but she wrote 5</think>\n**Answer:** 2+2=5") == "2+2=5"
     assert clean_transcription("hmm let me read...</think>**Answer:** x=1") == "x=1"
     assert clean_transcription("<think>never closed") == ""
+
+
+def test_clean_transcription_drops_yaml_front_matter():
+    raw = "---\nprimary_language: en\nis_rotation_valid: True\n---\nSolve $x+1=2$."
+    assert clean_transcription(raw) == "Solve $x+1=2$."
+    assert clean_transcription("a\n---\nb: c\n---\nd").startswith("a")  # only a leading block is removed
+
+
+def test_custom_prompts_and_image_order():
+    from types import SimpleNamespace
+    from pink.ocr import transcribe
+    calls = []
+    client = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(
+        create=lambda **kw: calls.append(kw) or SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content="x"))]))))
+    import tempfile, os
+    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as f:
+        f.write(b"\x89PNG\r\n\x1a\n")
+    transcribe(client, "m", f.name, system_prompt="", user_prompt="OCR:", image_first=True)
+    os.unlink(f.name)
+    msgs = calls[0]["messages"]
+    assert [m["role"] for m in msgs] == ["user"]
+    assert [p["type"] for p in msgs[0]["content"]] == ["image_url", "text"] and msgs[0]["content"][1]["text"] == "OCR:"
