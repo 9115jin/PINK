@@ -82,6 +82,24 @@ def make_client(cfg: JudgeConfig):
 
 # --------------------------------------------------------------------------- parsing
 
+_JSON_ESCAPE = re.compile(r'\\(["\\/bfnrt]|u[0-9a-fA-F]{4})?')
+
+
+def _loads_lenient(s: str) -> Any:
+    """``json.loads`` that also accepts backslashes a judge forgot to escape.
+
+    Small judges often copy LaTeX into the justifications verbatim (``\\(``, ``\\{``, ``\\implies``), which is
+    invalid JSON. Only when strict parsing fails, every backslash that does not start a valid JSON escape is escaped.
+    """
+    try:
+        return json.loads(s)
+    except json.JSONDecodeError:
+        fixed = _JSON_ESCAPE.sub(lambda m: m.group(0) if m.group(1) else "\\\\", s)
+        if fixed == s:
+            raise
+        return json.loads(fixed)
+
+
 def parse_judge_response(text: str) -> Dict[str, Any]:
     """Extract the JSON grading object from a (possibly noisy) judge response."""
     if text is None:
@@ -94,11 +112,11 @@ def parse_judge_response(text: str) -> Dict[str, Any]:
     fences = re.findall(r"```(?:json)?\s*([\s\S]*?)\s*```", text)
     for block in reversed(fences):
         try:
-            return json.loads(block)
+            return _loads_lenient(block)
         except json.JSONDecodeError:
             continue
     try:
-        return json.loads(text)
+        return _loads_lenient(text)
     except json.JSONDecodeError:
         pass
 
@@ -117,7 +135,7 @@ def parse_judge_response(text: str) -> Dict[str, Any]:
     for cand in reversed(pool):
         for attempt in (cand, re.sub(r",\s*([}\]])", r"\1", cand)):
             try:
-                return json.loads(attempt)
+                return _loads_lenient(attempt)
             except json.JSONDecodeError:
                 continue
     raise ValueError(f"could not parse JSON from judge response: {text[:200]!r}")

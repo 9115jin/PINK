@@ -23,6 +23,22 @@ def test_parse_trailing_commas():
     assert parse_judge_response("Result: " + text)["total"] == 50
 
 
+def test_parse_unescaped_latex():
+    # Small judges (e.g. Qwen3.5-9B without thinking) copy LaTeX into the justification without escaping it.
+    raw = ('{"scores": [{"item": "Core Formula/Principle Identification", "score": 20, '
+           '"justification": "uses \\( P(n,n) \\), \\{1,2,3\\} and r^3 = 8 \\implies r = 2, $6 \\cdot 2^2$"}], "total": 20}')
+    with pytest.raises(json.JSONDecodeError):
+        json.loads(raw)
+    parsed = parse_judge_response("```json\n" + raw + "\n```")
+    assert parsed["total"] == 20
+    assert parsed["scores"][0]["justification"].startswith("uses \\( P(n,n) \\)")
+
+
+def test_parse_valid_escapes_untouched():
+    text = json.dumps({**GOOD, "note": 'already escaped \\( x \\), a quote " and é'})
+    assert parse_judge_response(text)["note"] == 'already escaped \\( x \\), a quote " and é'
+
+
 def test_parse_failure():
     with pytest.raises(ValueError):
         parse_judge_response("no json here")
