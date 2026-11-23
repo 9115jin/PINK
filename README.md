@@ -13,6 +13,7 @@
 
 ## News
 
+- **2026-11**: [Leaderboard](#fermat-leaderboard-recent-vlms-and-ocr-models) of 21 recent VLMs and OCR models on FERMAT, graded with the open Qwen3-Next-80B judge.
 - **2026-11**: FERMAT-PINK is a built-in task of [lmms-eval](https://github.com/EvolvingLMMs-Lab/lmms-eval) (`--tasks fermat_pink`). The paper's GPT-5 and Qwen3 oracle grades now ship with `pip install pink-eval`.
 - **2026-10**: The paper was presented as an oral at EMNLP 2026 (Budapest).
 
@@ -132,6 +133,137 @@ print(result.pink, result.over_correction_rate)
 
 penalize(model_scores=[20, 20, 12], oracle_scores=[20, 5, 10])  # -> [20, 0, 10]
 ```
+
+## FERMAT leaderboard: recent VLMs and OCR models
+
+21 models evaluated with one pipeline on all 2,244 FERMAT samples: `pink ocr`, then `pink grade --judge qwen3-next-80b`, then `pink score --oracle fermat:qwen3-next-80b --missing zero`. Models marked † come from the paper. Their original transcriptions were re-graded with the same judge, so they link this table to the paper.
+
+Scores depend on the judge. Compare a model with the rows of this table, not with the GPT-5 table further down.
+
+| # | Model | Params | Type | PINK ↑ | 95% CI | Over-correction rate | Raw (no penalty) |
+|---:|---|---:|:---:|:---:|:---:|:---:|:---:|
+| 1 | [Qwen3.6-35B-A3B](https://huggingface.co/Qwen/Qwen3.6-35B-A3B) | 36.0B (MoE, 3B active) | VLM | **0.928** | 0.921–0.934 | 41.8% | 1.084 |
+| 2 | [Gemma-4-31B-it](https://huggingface.co/google/gemma-4-31B-it) | 31.3B | VLM | **0.921** | 0.914–0.928 | 45.6% | 1.104 |
+| 3 | Gemini 2.5 Flash † | API | VLM | **0.920** | 0.913–0.927 | 37.4% | 1.040 |
+| 4 | [Qwen3.8-27B](https://huggingface.co/Qwen/Qwen3.8-27B) | 27.8B | VLM | **0.916** | 0.909–0.923 | 39.3% | 1.057 |
+| 5 | [Qwen3.5-9B](https://huggingface.co/Qwen/Qwen3.5-9B) | 9.7B | VLM | **0.913** | 0.906–0.920 | 37.0% | 1.035 |
+| 6 | [Qwen2.5-VL-72B †](https://huggingface.co/Qwen/Qwen2.5-VL-72B-Instruct) | 73.4B | VLM | **0.913** | 0.905–0.921 | 50.2% | 1.122 |
+| 7 | [Muse-Glimmer-30B](https://huggingface.co/meta-models/Muse-Glimmer-30B) | 29.8B (reasoning strength low) | VLM | **0.913** | 0.906–0.919 | 35.2% | 1.017 |
+| 8 | [Chandra-OCR-2](https://huggingface.co/datalab-to/chandra-ocr-2) | 5.3B | OCR | **0.912** | 0.905–0.919 | 40.0% | 1.047 |
+| 9 | [Qwen3-VL-8B-Instruct](https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct) | 8.8B | VLM | **0.910** | 0.903–0.918 | 40.0% | 1.048 |
+| 10 | GPT-4o † | API | VLM | **0.896** | 0.888–0.904 | 44.6% | 1.073 |
+| 11 | [olmOCR-2-7B](https://huggingface.co/allenai/olmOCR-2-7B-1025) | 8.3B | OCR | **0.887** | 0.878–0.895 | 32.8% | 0.978 |
+| 12 | [InternVL3.5-8B](https://huggingface.co/OpenGVLab/InternVL3_5-8B) | 8.5B | VLM | **0.859** | 0.849–0.869 | 32.5% | 0.951 |
+| 13 | [Nanonets-OCR2-3B](https://huggingface.co/nanonets/Nanonets-OCR2-3B) | 3.8B | OCR | **0.845** | 0.835–0.855 | 30.5% | 0.925 |
+| 14 | [GLM-OCR](https://huggingface.co/zai-org/GLM-OCR) | 1.3B | OCR | **0.825** | 0.814–0.836 | 27.9% | 0.891 |
+| 15 | [Qwen2.5-VL-7B †](https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct) | 8.3B | VLM | **0.788** | 0.774–0.802 | 32.6% | 0.883 |
+| 16 | [dots.ocr](https://huggingface.co/dots-studio/dots.ocr) | 3.0B | OCR | **0.775** | 0.764–0.787 | 26.7% | 0.843 |
+| 17 | [PaddleOCR-VL-1.6](https://huggingface.co/PaddlePaddle/PaddleOCR-VL-1.6) | 959M | OCR | **0.722** | 0.709–0.735 | 24.6% | 0.781 |
+| 18 | [Unlimited-OCR](https://huggingface.co/baidu/Unlimited-OCR) | 3.3B | OCR | **0.690** | 0.678–0.703 | 24.3% | 0.749 |
+| 19 | [Unlimited-OCR-2](https://huggingface.co/baidu/Unlimited-OCR-2) | 3.3B | OCR | **0.675** | 0.663–0.690 | 24.5% | 0.733 |
+| 20 | [d1-2B](https://huggingface.co/LiquidAI/d1-2B) | 1.9B | VLM | **0.538** | 0.521–0.555 | 26.3% | 0.611 |
+| 21 | [DeepSeek-OCR-2](https://huggingface.co/deepseek-ai/DeepSeek-OCR-2) | 3.4B | OCR | **0.532** | 0.516–0.547 | 21.9% | 0.592 |
+
+<details><summary><b>By model size</b></summary>
+
+**≤ 4B**
+
+| # | Model | Params | Type | PINK ↑ | 95% CI | Over-correction rate | Raw (no penalty) |
+|---:|---|---:|:---:|:---:|:---:|:---:|:---:|
+| 1 | [Nanonets-OCR2-3B](https://huggingface.co/nanonets/Nanonets-OCR2-3B) | 3.8B | OCR | **0.845** | 0.835–0.855 | 30.5% | 0.925 |
+| 2 | [GLM-OCR](https://huggingface.co/zai-org/GLM-OCR) | 1.3B | OCR | **0.825** | 0.814–0.836 | 27.9% | 0.891 |
+| 3 | [dots.ocr](https://huggingface.co/dots-studio/dots.ocr) | 3.0B | OCR | **0.775** | 0.764–0.787 | 26.7% | 0.843 |
+| 4 | [PaddleOCR-VL-1.6](https://huggingface.co/PaddlePaddle/PaddleOCR-VL-1.6) | 959M | OCR | **0.722** | 0.709–0.735 | 24.6% | 0.781 |
+| 5 | [Unlimited-OCR](https://huggingface.co/baidu/Unlimited-OCR) | 3.3B | OCR | **0.690** | 0.678–0.703 | 24.3% | 0.749 |
+| 6 | [Unlimited-OCR-2](https://huggingface.co/baidu/Unlimited-OCR-2) | 3.3B | OCR | **0.675** | 0.663–0.690 | 24.5% | 0.733 |
+| 7 | [d1-2B](https://huggingface.co/LiquidAI/d1-2B) | 1.9B | VLM | **0.538** | 0.521–0.555 | 26.3% | 0.611 |
+| 8 | [DeepSeek-OCR-2](https://huggingface.co/deepseek-ai/DeepSeek-OCR-2) | 3.4B | OCR | **0.532** | 0.516–0.547 | 21.9% | 0.592 |
+
+**4–10B**
+
+| # | Model | Params | Type | PINK ↑ | 95% CI | Over-correction rate | Raw (no penalty) |
+|---:|---|---:|:---:|:---:|:---:|:---:|:---:|
+| 1 | [Qwen3.5-9B](https://huggingface.co/Qwen/Qwen3.5-9B) | 9.7B | VLM | **0.913** | 0.906–0.920 | 37.0% | 1.035 |
+| 2 | [Chandra-OCR-2](https://huggingface.co/datalab-to/chandra-ocr-2) | 5.3B | OCR | **0.912** | 0.905–0.919 | 40.0% | 1.047 |
+| 3 | [Qwen3-VL-8B-Instruct](https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct) | 8.8B | VLM | **0.910** | 0.903–0.918 | 40.0% | 1.048 |
+| 4 | [olmOCR-2-7B](https://huggingface.co/allenai/olmOCR-2-7B-1025) | 8.3B | OCR | **0.887** | 0.878–0.895 | 32.8% | 0.978 |
+| 5 | [InternVL3.5-8B](https://huggingface.co/OpenGVLab/InternVL3_5-8B) | 8.5B | VLM | **0.859** | 0.849–0.869 | 32.5% | 0.951 |
+| 6 | [Qwen2.5-VL-7B †](https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct) | 8.3B | VLM | **0.788** | 0.774–0.802 | 32.6% | 0.883 |
+
+**10–40B**
+
+| # | Model | Params | Type | PINK ↑ | 95% CI | Over-correction rate | Raw (no penalty) |
+|---:|---|---:|:---:|:---:|:---:|:---:|:---:|
+| 1 | [Qwen3.6-35B-A3B](https://huggingface.co/Qwen/Qwen3.6-35B-A3B) | 36.0B (MoE, 3B active) | VLM | **0.928** | 0.921–0.934 | 41.8% | 1.084 |
+| 2 | [Gemma-4-31B-it](https://huggingface.co/google/gemma-4-31B-it) | 31.3B | VLM | **0.921** | 0.914–0.928 | 45.6% | 1.104 |
+| 3 | [Qwen3.8-27B](https://huggingface.co/Qwen/Qwen3.8-27B) | 27.8B | VLM | **0.916** | 0.909–0.923 | 39.3% | 1.057 |
+| 4 | [Muse-Glimmer-30B](https://huggingface.co/meta-models/Muse-Glimmer-30B) | 29.8B (reasoning strength low) | VLM | **0.913** | 0.906–0.919 | 35.2% | 1.017 |
+
+**> 40B**
+
+| # | Model | Params | Type | PINK ↑ | 95% CI | Over-correction rate | Raw (no penalty) |
+|---:|---|---:|:---:|:---:|:---:|:---:|:---:|
+| 1 | [Qwen2.5-VL-72B †](https://huggingface.co/Qwen/Qwen2.5-VL-72B-Instruct) | 73.4B | VLM | **0.913** | 0.905–0.921 | 50.2% | 1.122 |
+
+**API (undisclosed)**
+
+| # | Model | Params | Type | PINK ↑ | 95% CI | Over-correction rate | Raw (no penalty) |
+|---:|---|---:|:---:|:---:|:---:|:---:|:---:|
+| 1 | Gemini 2.5 Flash † | API | VLM | **0.920** | 0.913–0.927 | 37.4% | 1.040 |
+| 2 | GPT-4o † | API | VLM | **0.896** | 0.888–0.904 | 44.6% | 1.073 |
+
+</details>
+
+<details><summary><b>General VLMs vs. dedicated OCR models</b></summary>
+
+**General-purpose VLMs**
+
+| # | Model | Params | PINK ↑ | 95% CI | Over-correction rate | Raw (no penalty) |
+|---:|---|---:|:---:|:---:|:---:|:---:|
+| 1 | [Qwen3.6-35B-A3B](https://huggingface.co/Qwen/Qwen3.6-35B-A3B) | 36.0B (MoE, 3B active) | **0.928** | 0.921–0.934 | 41.8% | 1.084 |
+| 2 | [Gemma-4-31B-it](https://huggingface.co/google/gemma-4-31B-it) | 31.3B | **0.921** | 0.914–0.928 | 45.6% | 1.104 |
+| 3 | Gemini 2.5 Flash † | API | **0.920** | 0.913–0.927 | 37.4% | 1.040 |
+| 4 | [Qwen3.8-27B](https://huggingface.co/Qwen/Qwen3.8-27B) | 27.8B | **0.916** | 0.909–0.923 | 39.3% | 1.057 |
+| 5 | [Qwen3.5-9B](https://huggingface.co/Qwen/Qwen3.5-9B) | 9.7B | **0.913** | 0.906–0.920 | 37.0% | 1.035 |
+| 6 | [Qwen2.5-VL-72B †](https://huggingface.co/Qwen/Qwen2.5-VL-72B-Instruct) | 73.4B | **0.913** | 0.905–0.921 | 50.2% | 1.122 |
+| 7 | [Muse-Glimmer-30B](https://huggingface.co/meta-models/Muse-Glimmer-30B) | 29.8B (reasoning strength low) | **0.913** | 0.906–0.919 | 35.2% | 1.017 |
+| 8 | [Qwen3-VL-8B-Instruct](https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct) | 8.8B | **0.910** | 0.903–0.918 | 40.0% | 1.048 |
+| 9 | GPT-4o † | API | **0.896** | 0.888–0.904 | 44.6% | 1.073 |
+| 10 | [InternVL3.5-8B](https://huggingface.co/OpenGVLab/InternVL3_5-8B) | 8.5B | **0.859** | 0.849–0.869 | 32.5% | 0.951 |
+| 11 | [Qwen2.5-VL-7B †](https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct) | 8.3B | **0.788** | 0.774–0.802 | 32.6% | 0.883 |
+| 12 | [d1-2B](https://huggingface.co/LiquidAI/d1-2B) | 1.9B | **0.538** | 0.521–0.555 | 26.3% | 0.611 |
+
+**Dedicated OCR / document-parsing models**
+
+| # | Model | Params | PINK ↑ | 95% CI | Over-correction rate | Raw (no penalty) |
+|---:|---|---:|:---:|:---:|:---:|:---:|
+| 1 | [Chandra-OCR-2](https://huggingface.co/datalab-to/chandra-ocr-2) | 5.3B | **0.912** | 0.905–0.919 | 40.0% | 1.047 |
+| 2 | [olmOCR-2-7B](https://huggingface.co/allenai/olmOCR-2-7B-1025) | 8.3B | **0.887** | 0.878–0.895 | 32.8% | 0.978 |
+| 3 | [Nanonets-OCR2-3B](https://huggingface.co/nanonets/Nanonets-OCR2-3B) | 3.8B | **0.845** | 0.835–0.855 | 30.5% | 0.925 |
+| 4 | [GLM-OCR](https://huggingface.co/zai-org/GLM-OCR) | 1.3B | **0.825** | 0.814–0.836 | 27.9% | 0.891 |
+| 5 | [dots.ocr](https://huggingface.co/dots-studio/dots.ocr) | 3.0B | **0.775** | 0.764–0.787 | 26.7% | 0.843 |
+| 6 | [PaddleOCR-VL-1.6](https://huggingface.co/PaddlePaddle/PaddleOCR-VL-1.6) | 959M | **0.722** | 0.709–0.735 | 24.6% | 0.781 |
+| 7 | [Unlimited-OCR](https://huggingface.co/baidu/Unlimited-OCR) | 3.3B | **0.690** | 0.678–0.703 | 24.3% | 0.749 |
+| 8 | [Unlimited-OCR-2](https://huggingface.co/baidu/Unlimited-OCR-2) | 3.3B | **0.675** | 0.663–0.690 | 24.5% | 0.733 |
+| 9 | [DeepSeek-OCR-2](https://huggingface.co/deepseek-ai/DeepSeek-OCR-2) | 3.4B | **0.532** | 0.516–0.547 | 21.9% | 0.592 |
+
+</details>
+
+- **Over-correction rate** is the share of samples with at least one over-corrected rubric component. **Raw** is the score before the penalty, Σ model / Σ oracle. A raw score above 1 means the transcriptions graded *better* than what the students actually wrote.
+- **95% CI** is a bootstrap over samples. Models with overlapping intervals are not reliably different.
+- **What stands out**
+  - Over-correction has not gone away. General-purpose VLMs over-correct 26–50% of the solutions, and all eight that score above 0.91 sit at 35–50%.
+  - Most dedicated OCR models over-correct less (22–28%), but they also misread more handwriting, so they lose content instead.
+  - OCR models fine-tuned from a strong VLM (Chandra-OCR-2, olmOCR-2, Nanonets-OCR2) keep roughly the over-correction level of their base model.
+- **Setup**
+  - Hardware and decoding: 4× L40S, vLLM 0.19.1 (transformers for models vLLM cannot serve), greedy decoding, at most 4,096 new tokens.
+  - Prompts: general VLMs use the paper's OCR prompt (Fig. 18). Dedicated OCR models use the prompt from their model card.
+  - Reasoning: thinking is switched off wherever the model has a switch. Muse-Glimmer-30B has none and runs at its lowest reasoning strength.
+- **Clean-up**
+  - Only layout markup is removed: the layout tags of Unlimited-OCR-2, the HTML of Chandra-OCR-2 (converted to Markdown as in Chandra's own pipeline), and olmOCR's front matter.
+  - Empty outputs score 0. So do repetition loops too long for the judge's 16k context, which mostly affects d1-2B, Unlimited-OCR-2 and DeepSeek-OCR-2.
+  - DeepSeek-OCR-2 runs without vLLM's n-gram repetition processor.
+- **Not included:** NVIDIA-Nemotron-3.5-Bolt-74B-A9B-24GB. Its packed 2-bit weights need vLLM nightly with Blackwell kernels.
 
 ## FERMAT results (GPT-5 judge, paper Table 1)
 
