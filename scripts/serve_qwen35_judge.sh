@@ -10,7 +10,7 @@
 # Notes (vLLM 0.19.1, 4x L40S):
 # * The preset keeps thinking on. The judge reasons for a few thousand tokens before the JSON, so the
 #   context is 16k. Without thinking it scores almost only 0 or 20 per component and agrees less with GPT-5.
-# * Throughput: ~2,600 gradings per hour on 4x L40S, i.e. about 50 min per FERMAT model (2,244 samples).
+# * Throughput: with DP=4 on 4x L40S, the 2,244 FERMAT oracle solutions were graded in 58 min.
 # * On GPUs connected only via PCIe, NCCL can hang at start-up; NCCL_P2P_DISABLE=1 avoids it.
 set -euo pipefail
 

@@ -82,3 +82,13 @@ def test_bundled_fermat_qwen3_oracle():
     oracle = load_grades("fermat:qwen3-next-80b")
     assert len(oracle) == 2244 and list(oracle.columns) == SCORE_COLUMNS
     assert set(oracle.index) == set(load_grades("fermat:gpt-5").index)
+
+
+def test_bundled_fermat_light_judge_oracle():
+    from pink import PACKAGED_ORACLES, load_grades
+
+    assert "fermat:qwen3.5-9b" in PACKAGED_ORACLES
+    oracle = load_grades("fermat:qwen3.5-9b")
+    assert len(oracle) == 2244 and list(oracle.columns) == SCORE_COLUMNS
+    assert set(oracle.index) == set(load_grades("fermat:gpt-5").index)
+    assert oracle.sum(axis=1).mean() == pytest.approx(72.6, abs=0.05)

@@ -13,6 +13,7 @@
 
 ## News
 
+- **2026-11**: v1.5 adds a light open-source judge, `--judge qwen3.5-9b`. It runs on one GPU and ranks FERMAT models like GPT-5 (Kendall τ = 0.96, r = 0.997). Its oracle grades ship with the package; see [Choosing a judge](#choosing-a-judge).
 - **2026-11**: [Leaderboard](#fermat-leaderboard-recent-vlms-and-ocr-models) of 22 recent VLMs and OCR models on FERMAT, graded with the open Qwen3-Next-80B judge.
 - **2026-11**: FERMAT-PINK is a built-in task of [lmms-eval](https://github.com/EvolvingLMMs-Lab/lmms-eval) (`--tasks fermat_pink`). The paper's GPT-5 and Qwen3 oracle grades now ship with `pip install pink-eval`.
 - **2026-10**: The paper was presented as an oral at EMNLP 2026 (Budapest).
@@ -89,6 +90,7 @@ All commands run requests in parallel (`--workers`), retry failed calls, and res
 |---|---|---|
 | `gpt-5` | `gpt-5-2025-08-07`, reasoning effort `medium` | Main judge in the paper. Uses the OpenAI API with the exact instructions of the paper's runs. Bundled oracle grades: `fermat:gpt-5`. |
 | `qwen3-next-80b` | `Qwen/Qwen3-Next-80B-A3B-Thinking` (temperature 0.6, top-p 0.95) | Open-source judge. VLM-level PINK agrees with GPT-5 at r = 0.99 and Kendall τ = 0.90 (paper App. E). Serve it with [`scripts/serve_qwen3_judge.sh`](https://github.com/9115jin/PINK/blob/main/scripts/serve_qwen3_judge.sh). Bundled oracle grades: `fermat:qwen3-next-80b`. |
+| `qwen3.5-9b` | `Qwen/Qwen3.5-9B`, thinking on (temperature 1.0, top-p 0.95, top-k 20) | **Light open-source judge that runs on one GPU.** VLM-level PINK agrees with GPT-5 at r = 0.997 and Kendall τ = 0.96 (all 2,244 samples × 15 paper VLMs, see [Choosing a judge](#choosing-a-judge)). Serve it with [`scripts/serve_qwen35_judge.sh`](https://github.com/9115jin/PINK/blob/main/scripts/serve_qwen35_judge.sh). Bundled oracle grades: `fermat:qwen3.5-9b`. |
 
 Any other chat model also works, e.g. `--model <name> --base-url <url>`. PINK values are comparable only when they come from the same judge.
 
@@ -102,6 +104,35 @@ pink score --model runs/qwen7b/grades_qwen.csv --oracle fermat:qwen3-next-80b
 ```
 
 The judge reasons for several thousand tokens per sample. If grades fail with `finish_reason=length`, give the server a longer context (`MAX_LEN`, default 16384).
+
+The light judge needs a single 24–48 GB GPU:
+
+```bash
+bash scripts/serve_qwen35_judge.sh                 # one GPU; DP=4 bash ... runs four replicas behind one endpoint
+pink grade --judge qwen3.5-9b --input runs/qwen7b/ocr.jsonl --out runs/qwen7b/grades_q35.csv --workers 64
+pink score --model runs/qwen7b/grades_q35.csv --oracle fermat:qwen3.5-9b
+```
+
+### Choosing a judge
+
+We re-graded the paper's transcriptions of 15 VLMs, plus the oracle, with open judges. Each judge was compared with the paper's GPT-5 grades on the same texts.
+
+| Judge | Hardware | Kendall τ (15 VLMs) | r(PINK) | Sample-level r | Time per model (2,244 samples) |
+|---|---|:---:|:---:|:---:|---|
+| `gpt-5` | OpenAI API | 1 | 1 | 1 | API |
+| `qwen3-next-80b` | 4× 48 GB (FP8) | 0.90 | 0.99 | 0.77 | ~3 h on 4× L40S |
+| **`qwen3.5-9b`** (thinking) | **1× 24–48 GB** | **0.96** | **0.997** | **0.90** | ~1 h on 4× L40S (one GPU: roughly 4× longer) |
+| Qwen3.5-9B, thinking off | 1× 24–48 GB | 0.87 | 0.972 | 0.70 | (top-3 differs from GPT-5) |
+| Granite-4.2-8B, thinking | 1× 24–48 GB | 0.91 | 0.984 | 0.90 | about 2× slower than Qwen3.5-9B |
+
+- **How the numbers were measured.**
+  - `qwen3.5-9b` was scored against the bundled `fermat:qwen3.5-9b` oracle on all 2,244 samples. With the oracle graded in the same run as the models, τ is 0.98.
+  - The rows without a preset were measured on a 500-sample stratified subset.
+- **What we recommend.**
+  - The light judge gives the same top-3 and bottom-3 models as GPT-5, with PINK values within 0.025 of GPT-5.
+  - Keep thinking on. Without it the judge scores almost only 0 or 20 per rubric component and agrees less with GPT-5.
+
+> **Compare over-correction rates only within one judge.** A judge that scores coarsely hides small corrections. Rounding GPT-5's own grades to 0 or 20 per component keeps the PINK ranking (τ = 0.98), but it lowers Gemini 2.5 Flash's over-correction rate from 59% to 21%.
 
 ### With lmms-eval
 
