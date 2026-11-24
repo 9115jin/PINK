@@ -43,7 +43,9 @@ class JudgeConfig:
     extra_body: Dict[str, Any] = field(default_factory=dict)
     instructions: str = GRADING_INSTRUCTIONS  #: system prompt (rubric) sent to the judge
     max_attempts: int = 5                   #: retries when the response cannot be parsed
-    timeout: float = 600.0
+    #: HTTP timeout per request in seconds. Local thinking judges can need well over 10 min per request under load;
+    #: a too-short timeout silently biases the kept grades towards short reasoning. Default: $PINK_JUDGE_TIMEOUT or 600.
+    timeout: float = field(default_factory=lambda: float(os.environ.get("PINK_JUDGE_TIMEOUT", "600")))
 
 
 #: Judges used in the paper. ``gpt-5`` is the main judge and uses the exact instructions
@@ -58,6 +60,18 @@ JUDGE_PRESETS: Dict[str, JudgeConfig] = {
         base_url="http://localhost:8000/v1",
         temperature=0.6,
         top_p=0.95,
+    ),
+    # Light open-source judge (2026-11): fits on one 24-48 GB GPU. On all 2,244 FERMAT samples x 15 paper VLMs it ranks
+    # the models like GPT-5 (Kendall tau = 0.98, r(PINK) = 0.997, sample-level r = 0.90). Thinking must stay on:
+    # without it the judge scores almost only 0 or 20 per component and agrees less with GPT-5.
+    # Sampling follows the Qwen3.5 generation config (T=1.0, top-p 0.95, top-k 20).
+    "qwen3.5-9b": JudgeConfig(
+        model="Qwen/Qwen3.5-9B",
+        base_url="http://localhost:8000/v1",
+        temperature=1.0,
+        top_p=0.95,
+        extra_body={"chat_template_kwargs": {"enable_thinking": True}, "top_k": 20},
+        timeout=7200.0,
     ),
 }
 
@@ -94,10 +108,12 @@ def _loads_lenient(s: str) -> Any:
     try:
         return json.loads(s)
     except json.JSONDecodeError:
-        fixed = _JSON_ESCAPE.sub(lambda m: m.group(0) if m.group(1) else "\\\\", s)
-        if fixed == s:
-            raise
+        pass
+    fixed = _JSON_ESCAPE.sub(lambda m: m.group(0) if m.group(1) else "\\\\", s)
+    try:
         return json.loads(fixed)
+    except json.JSONDecodeError:
+        return json.loads(fixed, strict=False)  # raw newlines / tabs inside strings
 
 
 def parse_judge_response(text: str) -> Dict[str, Any]:
@@ -138,7 +154,27 @@ def parse_judge_response(text: str) -> Dict[str, Any]:
                 return _loads_lenient(attempt)
             except json.JSONDecodeError:
                 continue
+    fallback = _scores_by_regex(text)
+    if fallback is not None:
+        return fallback
     raise ValueError(f"could not parse JSON from judge response: {text[:200]!r}")
+
+
+_ITEM_SCORE = re.compile(r'"item"\s*:\s*"([^"]+)"\s*,\s*"score"\s*:\s*"?(-?\d+(?:\.\d+)?)')
+
+
+def _scores_by_regex(text: str) -> Optional[Dict[str, Any]]:
+    """Last resort for structurally broken JSON (e.g. a missing ``}`` after the last item, a frequent slip of small
+    judges): read the ``"item": ..., "score": ...`` pairs directly. Only used when all five rubric items are found."""
+    found: Dict[str, Any] = {}
+    for name, score in _ITEM_SCORE.findall(text):
+        item = canonical_item(name)
+        if item is not None and item not in found:
+            found[item] = float(score)
+    if len(found) < len(RUBRIC_ITEMS):
+        return None
+    return {"scores": [{"item": i, "score": found[i], "justification": ""} for i in RUBRIC_ITEMS],
+            "parsed_by": "regex fallback"}
 
 
 def _to_score(value: Any) -> int:
@@ -189,6 +225,11 @@ def _request_kwargs(cfg: JudgeConfig) -> Dict[str, Any]:
     return kw
 
 
+def _encodable(text: str) -> str:
+    """Drop lone UTF-16 surrogates (from ``\\ud835``-style escapes in the judge's JSON); they cannot be written as UTF-8."""
+    return text.encode("utf-8", "replace").decode("utf-8")
+
+
 def grade(client, cfg: JudgeConfig, problem: str, solution: str, sample_id: str = "",
           instructions: Optional[str] = None) -> Dict[str, Any]:
     """Grade one solution. Returns a grade-file row (see :data:`SCORE_COLUMNS`)."""
@@ -219,7 +260,7 @@ def grade(client, cfg: JudgeConfig, problem: str, solution: str, sample_id: str 
         row.update({"success": True, "total_score": sum(scores.values()), "attempts": attempt + 1})
         for item, s_col, j_col in zip(RUBRIC_ITEMS, SCORE_COLUMNS, JUSTIFICATION_COLUMNS):
             row[s_col] = scores[item]
-            row[j_col] = justifs[item]
+            row[j_col] = _encodable(justifs[item])
         return row
     row.update({"error": error, "attempts": cfg.max_attempts})
     return row

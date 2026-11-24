@@ -64,16 +64,17 @@ def cmd_grade(args: argparse.Namespace) -> int:
     from .judge import JudgeConfig, grade, judge_from_preset, make_client
     from .rubric import JUSTIFICATION_COLUMNS, SCORE_COLUMNS
 
+    common = dict(model=args.model, base_url=args.base_url, api_key=args.api_key, temperature=args.temperature,
+                  top_p=args.top_p, max_tokens=args.max_tokens, reasoning_effort=args.reasoning_effort,
+                  timeout=args.timeout)
     if args.judge:
-        cfg = judge_from_preset(args.judge, model=args.model, base_url=args.base_url, api_key=args.api_key,
-                                temperature=args.temperature, max_tokens=args.max_tokens,
-                                reasoning_effort=args.reasoning_effort)
+        cfg = judge_from_preset(args.judge, **common)
     elif args.model:
-        cfg = JudgeConfig(model=args.model, base_url=args.base_url, api_key=args.api_key,
-                          temperature=args.temperature, max_tokens=args.max_tokens,
-                          reasoning_effort=args.reasoning_effort)
+        cfg = JudgeConfig(**{k: v for k, v in common.items() if v is not None})
     else:
-        sys.exit("pass --judge {gpt-5,qwen3-next-80b} or --model (with --base-url for a local server)")
+        sys.exit("pass --judge {gpt-5,qwen3-next-80b,qwen3.5-9b} or --model (with --base-url for a local server)")
+    if args.extra_body:
+        cfg.extra_body = {**cfg.extra_body, **json.loads(args.extra_body)}
 
     items = [it for it in read_jsonl(args.input) if "solution" in it]
     items = _limit(items, args.limit)
@@ -138,12 +139,16 @@ def build_parser() -> argparse.ArgumentParser:
     g = sub.add_parser("grade", help="grade solutions with the rubric-based LLM judge")
     g.add_argument("--input", required=True, help="jsonl with sample_id, problem, solution")
     g.add_argument("--out", required=True, help="output grades (.csv or .jsonl)")
-    g.add_argument("--judge", choices=["gpt-5", "qwen3-next-80b"], help="paper judge preset")
+    g.add_argument("--judge", choices=["gpt-5", "qwen3-next-80b", "qwen3.5-9b"],
+                   help="judge preset: gpt-5 (paper), qwen3-next-80b (paper, open), qwen3.5-9b (light, open)")
     g.add_argument("--model", help="judge model name (overrides the preset)")
     g.add_argument("--base-url", help="OpenAI-compatible endpoint of the judge")
     g.add_argument("--api-key")
     g.add_argument("--temperature", type=float)
+    g.add_argument("--top-p", type=float)
     g.add_argument("--max-tokens", type=int)
+    g.add_argument("--extra-body", help='JSON merged into the request, e.g. \'{"chat_template_kwargs": {"enable_thinking": true}}\'')
+    g.add_argument("--timeout", type=float, help="HTTP timeout per request in seconds (default: preset, $PINK_JUDGE_TIMEOUT or 600)")
     g.add_argument("--reasoning-effort", choices=["minimal", "low", "medium", "high"])
     g.add_argument("--workers", type=int, default=8)
     g.add_argument("--limit", type=int)

@@ -34,6 +34,32 @@ def test_parse_unescaped_latex():
     assert parsed["scores"][0]["justification"].startswith("uses \\( P(n,n) \\)")
 
 
+def test_parse_missing_brace_and_raw_newline():
+    # Granite-4.2-8B often drops the "}" after the last item; some judges put raw newlines inside strings.
+    items = [f'{{"item": "{i}", "score": {s}, "justification": "ok"}}' for i, s in zip(RUBRIC_ITEMS, [20, 15, 10, 5, 0])]
+    broken = '{"scores": [' + ", ".join(items)[:-1] + '\n  ],\n  "total": 50\n}'
+    with pytest.raises(json.JSONDecodeError):
+        json.loads(broken)
+    scores, _ = extract_scores(parse_judge_response(broken))
+    assert [scores[i] for i in RUBRIC_ITEMS] == [20, 15, 10, 5, 0]
+    raw_newline = json.dumps(GOOD).replace('"ok"', '"line one\nline two"', 1)
+    assert parse_judge_response(raw_newline)["total"] == 50
+
+
+def test_regex_fallback_needs_all_items():
+    partial = '{"scores": [{"item": "%s", "score": 20, "justification": "x"' % RUBRIC_ITEMS[0]
+    with pytest.raises(ValueError):
+        parse_judge_response(partial)
+
+
+def test_light_judge_preset_keeps_thinking_on():
+    cfg = judge_from_preset("qwen3.5-9b")
+    assert cfg.model == "Qwen/Qwen3.5-9B"
+    assert cfg.extra_body["chat_template_kwargs"]["enable_thinking"] is True
+    assert (cfg.temperature, cfg.top_p, cfg.extra_body["top_k"]) == (1.0, 0.95, 20)
+    assert cfg.timeout >= 3600
+
+
 def test_parse_valid_escapes_untouched():
     text = json.dumps({**GOOD, "note": 'already escaped \\( x \\), a quote " and é'})
     assert parse_judge_response(text)["note"] == 'already escaped \\( x \\), a quote " and é'
