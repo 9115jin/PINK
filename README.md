@@ -13,7 +13,7 @@
 
 ## News
 
-- **2026-11**: [Leaderboard](#fermat-leaderboard-recent-vlms-and-ocr-models) of 21 recent VLMs and OCR models on FERMAT, graded with the open Qwen3-Next-80B judge.
+- **2026-11**: [Leaderboard](#fermat-leaderboard-recent-vlms-and-ocr-models) of 22 recent VLMs and OCR models on FERMAT, graded with the open Qwen3-Next-80B judge.
 - **2026-11**: FERMAT-PINK is a built-in task of [lmms-eval](https://github.com/EvolvingLMMs-Lab/lmms-eval) (`--tasks fermat_pink`). The paper's GPT-5 and Qwen3 oracle grades now ship with `pip install pink-eval`.
 - **2026-10**: The paper was presented as an oral at EMNLP 2026 (Budapest).
 
@@ -136,7 +136,7 @@ penalize(model_scores=[20, 20, 12], oracle_scores=[20, 5, 10])  # -> [20, 0, 10]
 
 ## FERMAT leaderboard: recent VLMs and OCR models
 
-21 models evaluated with one pipeline on all 2,244 FERMAT samples: `pink ocr`, then `pink grade --judge qwen3-next-80b`, then `pink score --oracle fermat:qwen3-next-80b --missing zero`. Models marked † come from the paper. Their original transcriptions were re-graded with the same judge, so they link this table to the paper.
+22 models evaluated with one pipeline on all 2,244 FERMAT samples: `pink ocr`, then `pink grade --judge qwen3-next-80b`, then `pink score --oracle fermat:qwen3-next-80b --missing zero`. Models marked † come from the paper. Their original transcriptions were re-graded with the same judge, so they link this table to the paper.
 
 Scores depend on the judge. Compare a model with the rows of this table, not with the GPT-5 table further down.
 
@@ -155,14 +155,15 @@ Scores depend on the judge. Compare a model with the rows of this table, not wit
 | 11 | [olmOCR-2-7B](https://huggingface.co/allenai/olmOCR-2-7B-1025) | 8.3B | OCR | **0.887** | 0.878–0.895 | 32.8% | 0.978 |
 | 12 | [InternVL3.5-8B](https://huggingface.co/OpenGVLab/InternVL3_5-8B) | 8.5B | VLM | **0.859** | 0.849–0.869 | 32.5% | 0.951 |
 | 13 | [Nanonets-OCR2-3B](https://huggingface.co/nanonets/Nanonets-OCR2-3B) | 3.8B | OCR | **0.845** | 0.835–0.855 | 30.5% | 0.925 |
-| 14 | [GLM-OCR](https://huggingface.co/zai-org/GLM-OCR) | 1.3B | OCR | **0.825** | 0.814–0.836 | 27.9% | 0.891 |
-| 15 | [Qwen2.5-VL-7B †](https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct) | 8.3B | VLM | **0.788** | 0.774–0.802 | 32.6% | 0.883 |
-| 16 | [dots.ocr](https://huggingface.co/dots-studio/dots.ocr) | 3.0B | OCR | **0.775** | 0.764–0.787 | 26.7% | 0.843 |
-| 17 | [PaddleOCR-VL-1.6](https://huggingface.co/PaddlePaddle/PaddleOCR-VL-1.6) | 959M | OCR | **0.722** | 0.709–0.735 | 24.6% | 0.781 |
-| 18 | [Unlimited-OCR](https://huggingface.co/baidu/Unlimited-OCR) | 3.3B | OCR | **0.690** | 0.678–0.703 | 24.3% | 0.749 |
-| 19 | [Unlimited-OCR-2](https://huggingface.co/baidu/Unlimited-OCR-2) | 3.3B | OCR | **0.675** | 0.663–0.690 | 24.5% | 0.733 |
-| 20 | [d1-2B](https://huggingface.co/LiquidAI/d1-2B) | 1.9B | VLM | **0.538** | 0.521–0.555 | 26.3% | 0.611 |
-| 21 | [DeepSeek-OCR-2](https://huggingface.co/deepseek-ai/DeepSeek-OCR-2) | 3.4B | OCR | **0.532** | 0.516–0.547 | 21.9% | 0.592 |
+| 14 | SciEagle-Granite-9B (ETRI preview, weights not yet public) | 8.8B | VLM | **0.828** | 0.816–0.839 | 39.5% | 0.963 |
+| 15 | [GLM-OCR](https://huggingface.co/zai-org/GLM-OCR) | 1.3B | OCR | **0.825** | 0.814–0.836 | 27.9% | 0.891 |
+| 16 | [Qwen2.5-VL-7B †](https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct) | 8.3B | VLM | **0.788** | 0.774–0.802 | 32.6% | 0.883 |
+| 17 | [dots.ocr](https://huggingface.co/dots-studio/dots.ocr) | 3.0B | OCR | **0.775** | 0.764–0.787 | 26.7% | 0.843 |
+| 18 | [PaddleOCR-VL-1.6](https://huggingface.co/PaddlePaddle/PaddleOCR-VL-1.6) | 959M | OCR | **0.722** | 0.709–0.735 | 24.6% | 0.781 |
+| 19 | [Unlimited-OCR](https://huggingface.co/baidu/Unlimited-OCR) | 3.3B | OCR | **0.690** | 0.678–0.703 | 24.3% | 0.749 |
+| 20 | [Unlimited-OCR-2](https://huggingface.co/baidu/Unlimited-OCR-2) | 3.3B | OCR | **0.675** | 0.663–0.690 | 24.5% | 0.733 |
+| 21 | [d1-2B](https://huggingface.co/LiquidAI/d1-2B) | 1.9B | VLM | **0.538** | 0.521–0.555 | 26.3% | 0.611 |
+| 22 | [DeepSeek-OCR-2](https://huggingface.co/deepseek-ai/DeepSeek-OCR-2) | 3.4B | OCR | **0.532** | 0.516–0.547 | 21.9% | 0.592 |
 
 <details><summary><b>By model size</b></summary>
 
@@ -188,7 +189,8 @@ Scores depend on the judge. Compare a model with the rows of this table, not wit
 | 3 | [Qwen3-VL-8B-Instruct](https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct) | 8.8B | VLM | **0.910** | 0.903–0.918 | 40.0% | 1.048 |
 | 4 | [olmOCR-2-7B](https://huggingface.co/allenai/olmOCR-2-7B-1025) | 8.3B | OCR | **0.887** | 0.878–0.895 | 32.8% | 0.978 |
 | 5 | [InternVL3.5-8B](https://huggingface.co/OpenGVLab/InternVL3_5-8B) | 8.5B | VLM | **0.859** | 0.849–0.869 | 32.5% | 0.951 |
-| 6 | [Qwen2.5-VL-7B †](https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct) | 8.3B | VLM | **0.788** | 0.774–0.802 | 32.6% | 0.883 |
+| 6 | SciEagle-Granite-9B (ETRI preview, weights not yet public) | 8.8B | VLM | **0.828** | 0.816–0.839 | 39.5% | 0.963 |
+| 7 | [Qwen2.5-VL-7B †](https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct) | 8.3B | VLM | **0.788** | 0.774–0.802 | 32.6% | 0.883 |
 
 **10–40B**
 
@@ -230,8 +232,9 @@ Scores depend on the judge. Compare a model with the rows of this table, not wit
 | 8 | [Qwen3-VL-8B-Instruct](https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct) | 8.8B | **0.910** | 0.903–0.918 | 40.0% | 1.048 |
 | 9 | GPT-4o † | API | **0.896** | 0.888–0.904 | 44.6% | 1.073 |
 | 10 | [InternVL3.5-8B](https://huggingface.co/OpenGVLab/InternVL3_5-8B) | 8.5B | **0.859** | 0.849–0.869 | 32.5% | 0.951 |
-| 11 | [Qwen2.5-VL-7B †](https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct) | 8.3B | **0.788** | 0.774–0.802 | 32.6% | 0.883 |
-| 12 | [d1-2B](https://huggingface.co/LiquidAI/d1-2B) | 1.9B | **0.538** | 0.521–0.555 | 26.3% | 0.611 |
+| 11 | SciEagle-Granite-9B (ETRI preview, weights not yet public) | 8.8B | **0.828** | 0.816–0.839 | 39.5% | 0.963 |
+| 12 | [Qwen2.5-VL-7B †](https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct) | 8.3B | **0.788** | 0.774–0.802 | 32.6% | 0.883 |
+| 13 | [d1-2B](https://huggingface.co/LiquidAI/d1-2B) | 1.9B | **0.538** | 0.521–0.555 | 26.3% | 0.611 |
 
 **Dedicated OCR / document-parsing models**
 
