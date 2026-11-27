@@ -3,7 +3,6 @@
 **When VLMs ‘Fix’ Students: Identifying and Penalizing Over-Correction in the Evaluation of Multi-line Handwritten Math OCR**
 <br>Jin Seong\*, Wencke Liermann\*, Minho Kim, Jong-hun Shin, Soojong Lim · *EMNLP 2026 (Main, Oral)*
 
-[![Paper](https://img.shields.io/badge/Paper-ACL%20Anthology-red)](https://aclanthology.org/2026.emnlp-main.476/)
 [![Project page](https://img.shields.io/badge/Project-Page-c8263c)](https://9115jin.github.io/PINK/)
 [![arXiv](https://img.shields.io/badge/arXiv-2604.22774-b31b1b.svg)](https://arxiv.org/abs/2604.22774)
 [![HF Papers](https://img.shields.io/badge/%F0%9F%A4%97-Paper%20Page-yellow)](https://huggingface.co/papers/2604.22774)
