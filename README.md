@@ -9,7 +9,6 @@
 [![Leaderboard](https://img.shields.io/badge/%F0%9F%A4%97-Leaderboard-yellow)](https://huggingface.co/spaces/CodeWorker/PINK-Leaderboard)
 [![lmms-eval](https://img.shields.io/badge/lmms--eval-fermat__pink-green)](https://github.com/EvolvingLMMs-Lab/lmms-eval/tree/main/lmms_eval/tasks/fermat_pink)
 [![PyPI](https://img.shields.io/pypi/v/pink-eval)](https://pypi.org/project/pink-eval/)
-[![Tests](https://github.com/9115jin/PINK/actions/workflows/tests.yml/badge.svg)](https://github.com/9115jin/PINK/actions/workflows/tests.yml)
 [![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD--3--Clause-blue.svg)](https://github.com/9115jin/PINK/blob/main/LICENSE)
 
 ## News
