@@ -158,3 +158,10 @@ def test_presets_use_their_paper_instructions():
     client = FakeClient([json.dumps(GOOD)])
     grade(client, gpt5, "P", "S")
     assert client.calls[0]["messages"][0]["content"] == GPT5_PAPER_INSTRUCTIONS
+
+
+def test_closest_judge_preset():
+    cfg = judge_from_preset("qwen3.8-27b")
+    assert cfg.model == "Qwen/Qwen3.8-27B"
+    assert cfg.extra_body["chat_template_kwargs"]["enable_thinking"] is True
+    assert (cfg.temperature, cfg.top_p, cfg.extra_body["top_k"]) == (1.0, 0.95, 20)

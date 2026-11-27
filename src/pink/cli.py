@@ -72,7 +72,7 @@ def cmd_grade(args: argparse.Namespace) -> int:
     elif args.model:
         cfg = JudgeConfig(**{k: v for k, v in common.items() if v is not None})
     else:
-        sys.exit("pass --judge {gpt-5,qwen3-next-80b,qwen3.5-9b} or --model (with --base-url for a local server)")
+        sys.exit("pass --judge {gpt-5,qwen3-next-80b,qwen3.5-9b,qwen3.8-27b} or --model (with --base-url for a local server)")
     if args.extra_body:
         cfg.extra_body = {**cfg.extra_body, **json.loads(args.extra_body)}
 
@@ -139,8 +139,9 @@ def build_parser() -> argparse.ArgumentParser:
     g = sub.add_parser("grade", help="grade solutions with the rubric-based LLM judge")
     g.add_argument("--input", required=True, help="jsonl with sample_id, problem, solution")
     g.add_argument("--out", required=True, help="output grades (.csv or .jsonl)")
-    g.add_argument("--judge", choices=["gpt-5", "qwen3-next-80b", "qwen3.5-9b"],
-                   help="judge preset: gpt-5 (paper), qwen3-next-80b (paper, open), qwen3.5-9b (light, open)")
+    g.add_argument("--judge", choices=["gpt-5", "qwen3-next-80b", "qwen3.5-9b", "qwen3.8-27b"],
+                   help="judge preset: gpt-5 (paper), qwen3-next-80b (paper, open), qwen3.5-9b (light, open), "
+                        "qwen3.8-27b (open, closest to GPT-5)")
     g.add_argument("--model", help="judge model name (overrides the preset)")
     g.add_argument("--base-url", help="OpenAI-compatible endpoint of the judge")
     g.add_argument("--api-key")
@@ -159,7 +160,7 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--model", required=True, help="grades of the VLM transcriptions")
     s.add_argument("--oracle", required=True,
                    help="grades of the oracle transcriptions from the same judge, or a bundled set: "
-                        "fermat:gpt-5 or fermat:qwen3-next-80b")
+                        "fermat:gpt-5, fermat:qwen3-next-80b, fermat:qwen3.5-9b or fermat:qwen3.8-27b")
     s.add_argument("--threshold", type=float, default=10.0, help="minor/major boundary T (default 10)")
     s.add_argument("--missing", choices=["drop", "zero"], default="drop",
                    help="oracle samples without a model grade: drop them (paper) or score them 0")

@@ -73,6 +73,17 @@ JUDGE_PRESETS: Dict[str, JudgeConfig] = {
         extra_body={"chat_template_kwargs": {"enable_thinking": True}, "top_k": 20},
         timeout=7200.0,
     ),
+    # Closest open judge to GPT-5 (2026-11): needs two 48 GB GPUs (TP=2). On all 2,244 FERMAT samples x 15 paper VLMs:
+    # Kendall tau = 0.98, r(PINK) = 0.998, sample-level r = 0.93, and over-correction rates within a few points of
+    # GPT-5's (the 9B judge's run 3-8 points low). Same sampling and thinking setup as qwen3.5-9b.
+    "qwen3.8-27b": JudgeConfig(
+        model="Qwen/Qwen3.8-27B",
+        base_url="http://localhost:8000/v1",
+        temperature=1.0,
+        top_p=0.95,
+        extra_body={"chat_template_kwargs": {"enable_thinking": True}, "top_k": 20},
+        timeout=7200.0,
+    ),
 }
 
 
