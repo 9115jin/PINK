@@ -4,8 +4,10 @@
 <br>Jin Seong\*, Wencke Liermann\*, Minho Kim, Jong-hun Shin, Soojong Lim · *EMNLP 2026 (Main, Oral)*
 
 [![Paper](https://img.shields.io/badge/Paper-ACL%20Anthology-red)](https://aclanthology.org/2026.emnlp-main.476/)
+[![Project page](https://img.shields.io/badge/Project-Page-c8263c)](https://9115jin.github.io/PINK/)
 [![arXiv](https://img.shields.io/badge/arXiv-2604.22774-b31b1b.svg)](https://arxiv.org/abs/2604.22774)
 [![HF Papers](https://img.shields.io/badge/%F0%9F%A4%97-Paper%20Page-yellow)](https://huggingface.co/papers/2604.22774)
+[![Leaderboard](https://img.shields.io/badge/%F0%9F%A4%97-Leaderboard-yellow)](https://huggingface.co/spaces/CodeWorker/PINK-Leaderboard)
 [![lmms-eval](https://img.shields.io/badge/lmms--eval-fermat__pink-green)](https://github.com/EvolvingLMMs-Lab/lmms-eval/tree/main/lmms_eval/tasks/fermat_pink)
 [![PyPI](https://img.shields.io/pypi/v/pink-eval)](https://pypi.org/project/pink-eval/)
 [![Tests](https://github.com/9115jin/PINK/actions/workflows/tests.yml/badge.svg)](https://github.com/9115jin/PINK/actions/workflows/tests.yml)
@@ -13,6 +15,7 @@
 
 ## News
 
+- **2026-11**: [Project page](https://9115jin.github.io/PINK/) and a living [PINK Leaderboard](https://huggingface.co/spaces/CodeWorker/PINK-Leaderboard) on Hugging Face Spaces. Submit your model's results there as a pull request.
 - **2026-11**: v1.5 adds a light open-source judge, `--judge qwen3.5-9b`. It runs on one GPU and ranks FERMAT models like GPT-5 (Kendall τ = 0.96, r = 0.997). Its oracle grades ship with the package; see [Choosing a judge](#choosing-a-judge).
 - **2026-11**: [Leaderboard](#fermat-leaderboard-recent-vlms-and-ocr-models) of 22 recent VLMs and OCR models on FERMAT, graded with the open Qwen3-Next-80B judge.
 - **2026-11**: FERMAT-PINK is a built-in task of [lmms-eval](https://github.com/EvolvingLMMs-Lab/lmms-eval) (`--tasks fermat_pink`). The paper's GPT-5 and Qwen3 oracle grades now ship with `pip install pink-eval`.
@@ -166,6 +169,8 @@ penalize(model_scores=[20, 20, 12], oracle_scores=[20, 5, 10])  # -> [20, 0, 10]
 ```
 
 ## FERMAT leaderboard: recent VLMs and OCR models
+
+The living version of this table, open to submissions, is the [PINK Leaderboard](https://huggingface.co/spaces/CodeWorker/PINK-Leaderboard) on Hugging Face Spaces.
 
 22 models evaluated with one pipeline on all 2,244 FERMAT samples: `pink ocr`, then `pink grade --judge qwen3-next-80b`, then `pink score --oracle fermat:qwen3-next-80b --missing zero`. Models marked † come from the paper. Their original transcriptions were re-graded with the same judge, so they link this table to the paper.
 

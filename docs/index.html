@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="PINK, an over-correction-aware metric for handwritten math OCR (EMNLP 2026, oral): paper, code, and a leaderboard of VLMs and OCR models on FERMAT.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="When VLMs ‘Fix’ Students: PINK">
+<meta property="og:description" content="PINK, an over-correction-aware metric for handwritten math OCR (EMNLP 2026, oral): paper, code, and a leaderboard of VLMs and OCR models on FERMAT.">
+<meta property="og:url" content="https://9115jin.github.io/PINK/">
+<meta property="og:image" content="https://9115jin.github.io/PINK/overview.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://9115jin.github.io/PINK/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23c8263c'/%3E%3Cpath d='M8 17l5 5 11-12' stroke='white' stroke-width='3.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<title>When VLMs Fix Students</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Caveat:wght@500;700&display=swap">
+<style>
+/* Layout: one reading column (~68ch) on a graph-paper ground; the "red pen" accent marks only over-corrections and penalties. */
+:root {
+  --paper: #f6f7f9;        /* page ground: cool exam-paper white */
+  --sheet: #ffffff;        /* raised surfaces */
+  --ink: #18223a;          /* text: fountain-pen navy */
+  --ink-soft: #4a5671;     /* secondary text */
+  --rule: #d9dee8;         /* ruled lines, borders */
+  --grid: rgba(24, 34, 58, 0.045);
+  --pen: #c8263c;          /* the teacher's red pen: over-correction / penalty */
+  --pen-soft: rgba(200, 38, 60, 0.09);
+  --keep: #1f7a55;         /* faithful / kept */
+  --keep-soft: rgba(31, 122, 85, 0.1);
+  --bar: #2c4a8a;          /* score bars */
+  --code-bg: #eef1f6;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --font-hand: "Caveat", "Segoe Print", "Bradley Hand", cursive;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0f1422; --sheet: #161d2f; --ink: #e6e9f2; --ink-soft: #a3abc2; --rule: #2a3350;
+    --grid: rgba(230, 233, 242, 0.04); --pen: #ff6b7d; --pen-soft: rgba(255, 107, 125, 0.13);
+    --keep: #4fd1a0; --keep-soft: rgba(79, 209, 160, 0.12); --bar: #7f9cff; --code-bg: #1c2438; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0f1422; --sheet: #161d2f; --ink: #e6e9f2; --ink-soft: #a3abc2; --rule: #2a3350;
+  --grid: rgba(230, 233, 242, 0.04); --pen: #ff6b7d; --pen-soft: rgba(255, 107, 125, 0.13);
+  --keep: #4fd1a0; --keep-soft: rgba(79, 209, 160, 0.12); --bar: #7f9cff; --code-bg: #1c2438; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.6 var(--font-body);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+.wrap { max-width: 1040px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.col { max-width: 68ch; }
+section { padding-block: 56px 8px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(30px, 5.2vw, 52px); font-weight: 700; letter-spacing: -0.015em; }
+h2 { font-size: clamp(24px, 3.2vw, 32px); font-weight: 700; margin-bottom: 14px; }
+h3 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+p { margin: 0 0 14px; }
+a { color: var(--bar); text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--pen); outline-offset: 2px; border-radius: 4px; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--pen); margin-bottom: 14px; }
+.muted { color: var(--ink-soft); }
+.small { font-size: 14px; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+:not(pre) > code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+
+/* hero */
+.hero { padding-block: 56px 24px; }
+.venue { display: inline-flex; gap: 8px; align-items: center; font: 500 13px/1 var(--font-mono); color: var(--ink-soft); margin-bottom: 18px; flex-wrap: wrap; }
+.venue b { color: var(--pen); font-weight: 600; }
+.authors { margin: 18px 0 4px; font-size: 17px; }
+.authors span { white-space: nowrap; }
+.affil { color: var(--ink-soft); font-size: 14px; margin-bottom: 22px; }
+.links { display: flex; flex-wrap: wrap; gap: 10px; }
+.links a { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border: 1px solid var(--rule); border-radius: 999px; background: var(--sheet); color: var(--ink); text-decoration: none; font: 500 14px/1 var(--font-body); }
+.links a:hover { border-color: var(--ink-soft); }
+.links a .k { font: 600 11px/1 var(--font-mono); color: var(--ink-soft); }
+
+/* the worked example */
+.example { margin-top: 36px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.slip { background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; padding: 18px 20px; min-width: 0; position: relative; }
+.slip .lab { font: 600 11px/1 var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 12px; display: flex; justify-content: space-between; gap: 8px; }
+.q { font-size: 14px; color: var(--ink-soft); margin-bottom: 10px; }
+.hand { font: 500 26px/1.35 var(--font-hand); }
+.hand .err { color: var(--pen); text-decoration: underline wavy var(--pen); text-underline-offset: 6px; }
+.typed { font: 15px/1.7 var(--font-mono); overflow-wrap: anywhere; }
+.typed .fix { background: var(--pen-soft); color: var(--pen); padding: 0 3px; border-radius: 3px; font-weight: 500; }
+.score { font: 600 13px/1 var(--font-mono); padding: 5px 8px; border-radius: 6px; white-space: nowrap; }
+.score.ok { background: var(--keep-soft); color: var(--keep); }
+.score.bad { background: var(--pen-soft); color: var(--pen); }
+.caption { grid-column: 1 / -1; font-size: 14px; color: var(--ink-soft); }
+
+/* rubric table */
+.tbl-wrap { overflow-x: auto; background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; font-variant-numeric: tabular-nums; }
+th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+th { font: 600 11px/1.2 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); background: var(--sheet); position: sticky; top: 0; }
+tr:last-child td { border-bottom: 0; }
+td.num, th.num { text-align: right; }
+.pen { color: var(--pen); font-weight: 600; }
+.keep { color: var(--keep); font-weight: 600; }
+.strike { text-decoration: line-through; color: var(--ink-soft); }
+
+/* steps */
+.steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 22px 0 8px; }
+.step { border-top: 2px solid var(--ink); padding-top: 12px; }
+.step .n { font: 600 12px/1 var(--font-mono); color: var(--pen); margin-bottom: 8px; }
+.formula { font: 15px/1.6 var(--font-mono); background: var(--sheet); border: 1px solid var(--rule); border-left: 3px solid var(--pen); border-radius: 6px; padding: 12px 14px; overflow-x: auto; white-space: pre; margin: 14px 0; }
+figure { margin: 22px 0 0; }
+figure img { width: 100%; border-radius: 10px; border: 1px solid var(--rule); background: #fff; display: block; }
+figcaption { font-size: 13px; color: var(--ink-soft); margin-top: 8px; }
+
+/* facts */
+.facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 20px 0; }
+.fact { background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; padding: 16px 18px; }
+.fact .big { font: 700 34px/1 var(--font-display); margin-bottom: 8px; font-variant-numeric: tabular-nums; }
+.fact .big.pen { color: var(--pen); }
+.fact p { margin: 0; font-size: 14px; color: var(--ink-soft); }
+
+/* bars in tables */
+.barcell { display: flex; align-items: center; gap: 10px; min-width: 170px; }
+.barcell .b { height: 8px; border-radius: 4px; background: var(--bar); flex: none; }
+.barcell .v { font-weight: 600; min-width: 3.2em; }
+.oc { display: inline-flex; align-items: center; gap: 8px; }
+.oc .b { height: 8px; border-radius: 4px; background: var(--pen); opacity: 0.75; }
+.tag { font: 600 10px/1 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 6px; border-radius: 4px; border: 1px solid var(--rule); color: var(--ink-soft); margin-left: 6px; vertical-align: 1px; }
+.tag.paper { border-color: var(--bar); color: var(--bar); }
+.tag.ocr { border-color: var(--keep); color: var(--keep); }
+
+/* judge tabs */
+.tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border-bottom: 1px solid var(--rule); margin: 6px 0 12px; }
+.tab { text-align: left; background: none; border: 0; border-bottom: 3px solid transparent; padding: 10px 12px 9px 0; cursor: pointer; color: var(--ink-soft); display: grid; gap: 2px; min-width: 0; }
+.tab b { font: 700 16px/1.2 var(--font-display); color: var(--ink-soft); }
+.tab span { font: 12px/1.3 var(--font-body); }
+.tab[aria-selected="true"] { border-bottom-color: var(--pen); }
+.tab[aria-selected="true"] b { color: var(--ink); }
+@media (max-width: 520px) { .tab b { font-size: 14px; } .tab span { font-size: 11px; } }
+
+/* leaderboard controls */
+.controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 14px; }
+.chip { font: 500 13px/1 var(--font-body); padding: 8px 12px; border-radius: 999px; border: 1px solid var(--rule); background: var(--sheet); color: var(--ink); cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.status { background: var(--sheet); border: 1px dashed var(--ink-soft); border-radius: 10px; padding: 18px 20px; }
+.status .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--pen); margin-right: 8px; vertical-align: 1px; }
+
+/* code */
+.code { position: relative; background: var(--code-bg); border: 1px solid var(--rule); border-radius: 10px; margin: 12px 0; }
+.code pre { margin: 0; padding: 16px 18px; overflow-x: auto; font: 13.5px/1.65 var(--font-mono); }
+.code .c { color: var(--ink-soft); }
+.copy { position: absolute; top: 8px; right: 8px; font: 500 12px/1 var(--font-body); padding: 6px 10px; border-radius: 6px; border: 1px solid var(--rule); background: var(--sheet); color: var(--ink); cursor: pointer; }
+.notes { font-size: 14px; color: var(--ink-soft); padding-left: 18px; }
+.notes li { margin-bottom: 6px; }
+footer { padding-block: 48px 64px; color: var(--ink-soft); font-size: 13px; }
+
+@media (max-width: 760px) {
+  .example, .steps, .facts { grid-template-columns: 1fr; }
+  .hand { font-size: 23px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .typed .fix { animation: pulse 2.6s ease-in-out 1.2s 2; }
+  @keyframes pulse { 50% { background: rgba(200, 38, 60, 0.28); } }
+}
+</style>
+
+</head>
+<body>
+<header class="wrap hero">
+  <div class="venue"><b>EMNLP 2026</b> Main Conference · Oral · Budapest</div>
+  <h1>When VLMs ‘Fix’ Students: Identifying and Penalizing Over-Correction in Handwritten Math OCR</h1>
+  <div class="authors">
+    <span>Jin Seong*</span>, <span>Wencke Liermann*</span>, <span>Minho Kim</span>, <span>Jong-hun Shin</span>, <span>Soojong Lim</span>
+  </div>
+  <div class="affil">Electronics and Telecommunications Research Institute (ETRI), Republic of Korea · *equal contribution</div>
+  <nav class="links" aria-label="Paper and code">
+    <a href="https://aclanthology.org/2026.emnlp-main.476/"><span class="k">PDF</span> ACL Anthology</a>
+    <a href="https://arxiv.org/abs/2604.22774"><span class="k">arXiv</span> 2604.22774</a>
+    <a href="https://github.com/9115jin/PINK"><span class="k">Code</span> GitHub</a>
+    <a href="https://pypi.org/project/pink-eval/"><span class="k">pip</span> pink-eval</a>
+    <a href="https://github.com/EvolvingLMMs-Lab/lmms-eval/tree/main/lmms_eval/tasks/fermat_pink"><span class="k">Task</span> lmms-eval</a>
+    <a href="https://huggingface.co/spaces/CodeWorker/PINK-Leaderboard"><span class="k">Live</span> Leaderboard</a>
+    <a href="https://huggingface.co/papers/2604.22774"><span class="k">HF</span> Paper page</a>
+  </nav>
+
+  <div class="example" aria-label="A real over-correction from FERMAT">
+    <div class="slip">
+      <div class="lab"><span>What the student wrote</span><span class="score ok">graded 60 / 100</span></div>
+      <div class="q">Express 256 as a power of 2.</div>
+      <div class="hand">256 = 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2<br>So 256 = <span class="err">2<sup>9</sup></span></div>
+    </div>
+    <div class="slip">
+      <div class="lab"><span>What GPT-4o transcribed</span><span class="score bad">graded 100 / 100</span></div>
+      <div class="q">Express 256 as a power of 2.</div>
+      <div class="typed">We have \( 256 = 2 \times 2 \times 2 \times 2 \times 2 \times 2 \times 2 \times 2 \). So we can say that \( 256 = 2^<span class="fix">8</span> \).</div>
+    </div>
+    <p class="caption">FERMAT sample <span class="mono">img_230_pert_2.4</span>. The student's mistake is gone from the transcription. String metrics see one changed character; a tutoring system would never see the error.</p>
+  </div>
+</header>
+
+<main class="wrap">
+  <section id="method">
+    <div class="eyebrow">The metric</div>
+    <h2>PINK grades the transcription, then takes back what the model made up</h2>
+    <div class="col">
+      <p>A vision-language model that reads a student's handwritten solution often repairs it on the way. The output looks clean, BLEU and edit distance barely move, but the error a teacher needed to see has disappeared. We call this <b>over-correction</b>.</p>
+    </div>
+    <div class="steps">
+      <div class="step"><div class="n">Step 1</div><h3>Grade the transcription</h3><p class="small muted">An LLM judge scores it on a 5-component, 100-point rubric, so <code>\frac{1}{2}</code> and <code>0.5</code> count as the same.</p></div>
+      <div class="step"><div class="n">Step 2</div><h3>Grade what the student wrote</h3><p class="small muted">The same judge scores the oracle transcription, errors included. This is the score a faithful transcription should get.</p></div>
+      <div class="step"><div class="n">Step 3</div><h3>Penalize any gain</h3><p class="small muted">A component that scores higher than the oracle is an over-correction: reverted to the oracle if the gain is ≤ 10 points, set to 0 if it is larger.</p></div>
+    </div>
+    <div class="tbl-wrap" style="margin-top:18px">
+      <table aria-label="Rubric scores for the example">
+        <thead><tr><th>Rubric component (20 pts each)</th><th class="num">Student (oracle)</th><th class="num">GPT-4o</th><th class="num">ΔS</th><th class="num">After PINK</th></tr></thead>
+        <tbody>
+          <tr><td>Core formula / principle</td><td class="num">20</td><td class="num">20</td><td class="num">0</td><td class="num">20</td></tr>
+          <tr><td>Condition / boundary application</td><td class="num">20</td><td class="num">20</td><td class="num">0</td><td class="num">20</td></tr>
+          <tr><td>Calculation accuracy (early–mid)</td><td class="num">20</td><td class="num">20</td><td class="num">0</td><td class="num">20</td></tr>
+          <tr><td>Calculation accuracy (late)</td><td class="num">0</td><td class="num pen">20</td><td class="num pen">+20</td><td class="num"><span class="strike">20</span> <span class="pen">0</span></td></tr>
+          <tr><td>Final value verification</td><td class="num">0</td><td class="num pen">20</td><td class="num pen">+20</td><td class="num"><span class="strike">20</span> <span class="pen">0</span></td></tr>
+          <tr><td><b>Total</b></td><td class="num"><b>60</b></td><td class="num pen"><b>100</b></td><td class="num"></td><td class="num keep"><b>60</b></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="formula" aria-label="PINK formula">PINK = Σ<sub>n</sub> S<sub>penalized,n</sub> / Σ<sub>n</sub> S<sub>oracle,n</sub>        (paper Eq. 4)
+1.0 = as good as what the student actually wrote</div>
+    <figure>
+      <img src="overview.jpg" alt="Overview figure from the paper: an LLM judge grades the VLM transcription and the oracle with the same rubric, and components where the VLM scores higher are penalized." loading="lazy">
+      <figcaption>Overview figure from the paper.</figcaption>
+    </figure>
+  </section>
+
+  <section id="findings">
+    <div class="eyebrow">Paper results</div>
+    <h2>Every model we tested over-corrects, and BLEU rewards it</h2>
+    <div class="facts">
+      <div class="fact"><div class="big pen">42–66%</div><p>of transcriptions contain at least one over-corrected rubric component, across 15 VLMs on 2,244 FERMAT solutions.</p></div>
+      <div class="fact"><div class="big">55.0%</div><p>of expert judgments prefer PINK's verdict, against 39.5% for BLEU, in a 200-item human study.</p></div>
+      <div class="fact"><div class="big">Rank flips</div><p>GPT-4o is heavily penalized for aggressive over-correction, and Gemini 2.5 Flash comes out as the most faithful transcriber.</p></div>
+    </div>
+    <p class="small muted">Per-model numbers are in the <a href="#leaderboard" data-tab="gpt-5">GPT-5 tab</a> of the leaderboard below.</p>
+  </section>
+
+  <section id="leaderboard">
+    <div class="eyebrow">Leaderboard</div>
+    <h2>Recent VLMs and OCR models on FERMAT</h2>
+    <p class="col small muted">The living version, open to submissions, is the <a href="https://huggingface.co/spaces/CodeWorker/PINK-Leaderboard">PINK Leaderboard</a> on Hugging Face Spaces · <span class="updated">updated 2026-11-27</span></p>
+    <div class="tabs" role="tablist" aria-label="Judge"></div>
+    <p class="col muted small" id="lb-desc"></p>
+    <div id="lb"></div>
+  </section>
+
+  <section id="judges">
+    <div class="eyebrow">Which judge?</div>
+    <h2>A 9B judge on one GPU ranks models like GPT-5</h2>
+    <div class="col">
+      <p>We re-graded the paper's transcriptions of 15 VLMs and the oracle with open judges and compared them with GPT-5 on the same texts. Thinking matters more than size: without it every judge scores almost only 0 or 20 per component and loses agreement.</p>
+    </div>
+    <div class="tbl-wrap">
+      <table aria-label="Judge agreement with GPT-5">
+        <thead><tr><th>Judge</th><th>Hardware</th><th class="num">Kendall τ</th><th class="num">r(PINK)</th><th class="num">Sample r</th><th>Over-correction rates</th><th>Preset</th></tr></thead>
+        <tbody>
+          <tr><td>GPT-5 (paper)</td><td>OpenAI API</td><td class="num">1</td><td class="num">1</td><td class="num">1</td><td>reference</td><td><code>gpt-5</code></td></tr>
+          <tr><td><b>Qwen3.8-27B</b>, thinking</td><td>2× 48 GB</td><td class="num keep">0.981</td><td class="num keep">0.998</td><td class="num keep">0.933</td><td>within ~4 points of GPT-5</td><td><code>qwen3.8-27b</code></td></tr>
+          <tr><td><b>Qwen3.5-9B</b>, thinking</td><td>1× 24–48 GB</td><td class="num keep">0.981</td><td class="num">0.997</td><td class="num">0.902</td><td>3–8 points lower</td><td><code>qwen3.5-9b</code></td></tr>
+          <tr><td>Qwen3-Next-80B (paper App. E)</td><td>4× 48 GB (FP8)</td><td class="num">0.90</td><td class="num">0.99</td><td class="num">0.77</td><td>much lower</td><td><code>qwen3-next-80b</code></td></tr>
+          <tr><td class="muted">Granite-4.2-8B, thinking</td><td class="muted">1× 24–48 GB</td><td class="num muted">0.91</td><td class="num muted">0.984</td><td class="num muted">0.897</td><td class="muted">500-sample pilot</td><td class="muted">–</td></tr>
+          <tr><td class="muted">Any of them without thinking</td><td class="muted"></td><td class="num muted">0.87–0.91</td><td class="num muted">0.965–0.983</td><td class="num muted">0.68–0.85</td><td class="muted">top-3 differs from GPT-5</td><td class="muted">–</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <ul class="notes" style="margin-top:12px">
+      <li>τ is over the 15 paper VLMs, measured on all 2,244 samples with each judge's own oracle grades from the same run. With the oracle grades shipped in <code>pink-eval</code>, the 9B judge reaches τ = 0.96.</li>
+      <li>Compare over-correction rates only within one judge. A judge that scores coarsely hides small corrections: rounding GPT-5's own grades to 0 or 20 keeps the ranking (τ = 0.98) but drops Gemini 2.5 Flash's over-correction rate from 59% to 21%.</li>
+    </ul>
+  </section>
+
+  <section id="start">
+    <div class="eyebrow">Get started</div>
+    <h2>Evaluate your VLM in four commands</h2>
+    <div class="col"><p class="muted">FERMAT (<a href="https://aclanthology.org/2025.acl-long.720/">Nath et al., 2025</a>) is gated on Hugging Face: accept its terms, then <code>huggingface-cli login</code>. The judge's oracle grades ship with the package.</p></div>
+    <div class="code"><button class="copy" type="button" data-target="cmd">Copy</button><pre id="cmd"><span class="c"># install</span>
+pip install "pink-eval[fermat]"
+
+<span class="c"># 1) download FERMAT: images/ + manifest.jsonl</span>
+pink fermat --out-dir data/fermat
+
+<span class="c"># 2) transcribe with your VLM (any OpenAI-compatible endpoint, e.g. vllm serve)</span>
+pink ocr --manifest data/fermat/manifest.jsonl --model my-vlm \
+         --base-url http://localhost:8000/v1 --out runs/my-vlm/ocr.jsonl
+
+<span class="c"># 3) grade with an open judge (scripts/serve_qwen35_judge.sh in the repo serves it on one GPU)</span>
+pink grade --judge qwen3.5-9b --base-url http://localhost:8001/v1 \
+           --input runs/my-vlm/ocr.jsonl --out runs/my-vlm/grades.csv
+
+<span class="c"># 4) score against the bundled oracle grades of the same judge</span>
+pink score --model runs/my-vlm/grades.csv --oracle fermat:qwen3.5-9b</pre></div>
+    <p class="small muted">Already using <a href="https://github.com/EvolvingLMMs-Lab/lmms-eval">lmms-eval</a>? Run <code>--tasks fermat_pink</code>. To use the GPT-5 judge from the paper, pass <code>--judge gpt-5</code> and score against <code>fermat:gpt-5</code>.</p>
+  </section>
+
+  <section id="cite">
+    <div class="eyebrow">Citation</div>
+    <h2>BibTeX</h2>
+    <div class="code"><button class="copy" type="button" data-target="bib">Copy</button><pre id="bib">@inproceedings{seong-etal-2026-vlms,
+    title = "When {VLM}s `Fix' Students: Identifying and Penalizing Over-Correction in the Evaluation of Multi-line Handwritten Math {OCR}",
+    author = "Seong, Jin and Liermann, Wencke and Kim, Minho and Shin, Jong-hun and Lim, Soojong",
+    booktitle = "Proceedings of the 2026 Conference on Empirical Methods in Natural Language Processing",
+    month = oct,
+    year = "2026",
+    address = "Budapest, Hungary",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2026.emnlp-main.476/",
+    doi = "10.18653/2026.emnlp-main.476",
+    pages = "10932--10953"
+}</pre></div>
+  </section>
+</main>
+
+<footer class="wrap">
+  PINK is released under BSD-3-Clause, © 2026 ETRI. FERMAT is by Nath et al. (2025), CC-BY-4.0. Correspondence: <span class="mono">real_castle@etri.re.kr</span>
+</footer>
+
+<script>
+let LB = {"updated": "2026-11-27", "tabs": [{"id": "qwen3.8-27b", "label": "Qwen3.8-27B", "sub": "closest open judge to GPT-5", "desc": "Graded by Qwen3.8-27B with thinking, the open judge that agrees best with GPT-5, against its own grades of the oracle. New submissions go here.", "notes": ["Paper models are graded from the exact transcriptions GPT-5 saw; new models use the paper's OCR prompt with thinking off, or the model card's prompt for dedicated OCR models.", "The judge is also one of the graded models (Qwen3.8-27B), so a family preference cannot be ruled out. On the paper models it ranks like GPT-5 (Kendall τ = 0.98).", "Empty transcriptions and repetition loops too long for the judge's 16k context count as 0."], "rows": null}, {"id": "qwen3-next-80b", "label": "Qwen3-Next-80B", "sub": "paper appendix judge", "desc": "Graded by Qwen3-Next-80B-A3B-Thinking against its bundled oracle grades, as in the GitHub README (November 2026).", "notes": ["Paper models (tag “paper”) are re-graded from their original transcriptions.", "This judge scores coarsely, so its over-correction rates run well below GPT-5's. Compare rates only within one tab.", "Empty transcriptions and repetition loops too long for the judge's 16k context count as 0."], "rows": [{"id": "qwen3.6-35b-a3b", "name": "Qwen3.6-35B-A3B", "url": "https://huggingface.co/Qwen/Qwen3.6-35B-A3B", "type": "VLM", "source": "maintainers", "params": 36.0, "note": "MoE, 3B active", "pink": 0.9278, "lo": 0.9213, "hi": 0.9345, "oc": 0.4184, "raw": 1.0839, "graded": 2243, "n": 2244}, {"id": "gemma-4-31b-it", "name": "Gemma-4-31B-it", "url": "https://huggingface.co/google/gemma-4-31B-it", "type": "VLM", "source": "maintainers", "params": 31.3, "note": "", "pink": 0.9211, "lo": 0.9139, "hi": 0.928, "oc": 0.4563, "raw": 1.1041, "graded": 2244, "n": 2244}, {"id": "gemini-2.5-flash", "name": "Gemini 2.5 Flash", "url": null, "type": "VLM", "source": "paper", "params": null, "note": "API", "pink": 0.9201, "lo": 0.9133, "hi": 0.9267, "oc": 0.3743, "raw": 1.0405, "graded": 2243, "n": 2244}, {"id": "qwen3.8-27b", "name": "Qwen3.8-27B", "url": "https://huggingface.co/Qwen/Qwen3.8-27B", "type": "VLM", "source": "maintainers", "params": 27.8, "note": "", "pink": 0.9164, "lo": 0.9093, "hi": 0.9229, "oc": 0.3935, "raw": 1.0574, "graded": 2244, "n": 2244}, {"id": "qwen2.5-vl-72b", "name": "Qwen2.5-VL-72B", "url": "https://huggingface.co/Qwen/Qwen2.5-VL-72B-Instruct", "type": "VLM", "source": "paper", "params": 73.4, "note": "", "pink": 0.9132, "lo": 0.9053, "hi": 0.9207, "oc": 0.5022, "raw": 1.1221, "graded": 2243, "n": 2244}, {"id": "qwen3.5-9b", "name": "Qwen3.5-9B", "url": "https://huggingface.co/Qwen/Qwen3.5-9B", "type": "VLM", "source": "maintainers", "params": 9.7, "note": "", "pink": 0.9132, "lo": 0.9062, "hi": 0.9201, "oc": 0.3703, "raw": 1.0349, "graded": 2243, "n": 2244}, {"id": "muse-glimmer-30b", "name": "Muse-Glimmer-30B", "url": "https://huggingface.co/meta-models/Muse-Glimmer-30B", "type": "VLM", "source": "maintainers", "params": 29.8, "note": "low reasoning effort", "pink": 0.9128, "lo": 0.9056, "hi": 0.9193, "oc": 0.3525, "raw": 1.017, "graded": 2242, "n": 2244}, {"id": "chandra-ocr-2", "name": "Chandra-OCR-2", "url": "https://huggingface.co/datalab-to/chandra-ocr-2", "type": "OCR", "source": "maintainers", "params": 5.3, "note": "", "pink": 0.912, "lo": 0.905, "hi": 0.9189, "oc": 0.3997, "raw": 1.0469, "graded": 2244, "n": 2244}, {"id": "qwen3-vl-8b-instruct", "name": "Qwen3-VL-8B-Instruct", "url": "https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct", "type": "VLM", "source": "maintainers", "params": 8.8, "note": "", "pink": 0.9101, "lo": 0.9027, "hi": 0.918, "oc": 0.3997, "raw": 1.0475, "graded": 2243, "n": 2244}, {"id": "gpt-4o", "name": "GPT-4o", "url": null, "type": "VLM", "source": "paper", "params": null, "note": "API", "pink": 0.8964, "lo": 0.8878, "hi": 0.9044, "oc": 0.4456, "raw": 1.0729, "graded": 2244, "n": 2244}, {"id": "olmocr-2-7b", "name": "olmOCR-2-7B", "url": "https://huggingface.co/allenai/olmOCR-2-7B-1025", "type": "OCR", "source": "maintainers", "params": 8.3, "note": "", "pink": 0.8866, "lo": 0.878, "hi": 0.8947, "oc": 0.3284, "raw": 0.9781, "graded": 2243, "n": 2244}, {"id": "internvl3.5-8b", "name": "InternVL3.5-8B", "url": "https://huggingface.co/OpenGVLab/InternVL3_5-8B", "type": "VLM", "source": "maintainers", "params": 8.5, "note": "", "pink": 0.8588, "lo": 0.8485, "hi": 0.8693, "oc": 0.3253, "raw": 0.9509, "graded": 2244, "n": 2244}, {"id": "nanonets-ocr2-3b", "name": "Nanonets-OCR2-3B", "url": "https://huggingface.co/nanonets/Nanonets-OCR2-3B", "type": "OCR", "source": "maintainers", "params": 3.8, "note": "", "pink": 0.8446, "lo": 0.8351, "hi": 0.8546, "oc": 0.3048, "raw": 0.9247, "graded": 2244, "n": 2244}, {"id": "scieagle-granite-9b-preview", "name": "SciEagle-Granite-9B (preview)", "url": null, "type": "VLM", "source": "maintainers", "params": 8.8, "note": "ETRI preview, weights not public", "pink": 0.8278, "lo": 0.8161, "hi": 0.8393, "oc": 0.3953, "raw": 0.9631, "graded": 2244, "n": 2244}, {"id": "glm-ocr", "name": "GLM-OCR", "url": "https://huggingface.co/zai-org/GLM-OCR", "type": "OCR", "source": "maintainers", "params": 1.3, "note": "", "pink": 0.825, "lo": 0.8139, "hi": 0.8357, "oc": 0.279, "raw": 0.8913, "graded": 2244, "n": 2244}, {"id": "qwen2.5-vl-7b", "name": "Qwen2.5-VL-7B", "url": "https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct", "type": "VLM", "source": "paper", "params": 8.3, "note": "", "pink": 0.7883, "lo": 0.7743, "hi": 0.8019, "oc": 0.3258, "raw": 0.8832, "graded": 2244, "n": 2244}, {"id": "dots.ocr", "name": "dots.ocr", "url": "https://huggingface.co/dots-studio/dots.ocr", "type": "OCR", "source": "maintainers", "params": 3.0, "note": "", "pink": 0.7751, "lo": 0.7635, "hi": 0.787, "oc": 0.2674, "raw": 0.8431, "graded": 2242, "n": 2244}, {"id": "paddleocr-vl-1.6", "name": "PaddleOCR-VL-1.6", "url": "https://huggingface.co/PaddlePaddle/PaddleOCR-VL-1.6", "type": "OCR", "source": "maintainers", "params": 1.0, "note": "", "pink": 0.7221, "lo": 0.7089, "hi": 0.7354, "oc": 0.2464, "raw": 0.781, "graded": 2244, "n": 2244}, {"id": "unlimited-ocr", "name": "Unlimited-OCR", "url": "https://huggingface.co/baidu/Unlimited-OCR", "type": "OCR", "source": "maintainers", "params": 3.3, "note": "", "pink": 0.6903, "lo": 0.6777, "hi": 0.7034, "oc": 0.2429, "raw": 0.7487, "graded": 2243, "n": 2244}, {"id": "unlimited-ocr-2", "name": "Unlimited-OCR-2", "url": "https://huggingface.co/baidu/Unlimited-OCR-2", "type": "OCR", "source": "maintainers", "params": 3.3, "note": "", "pink": 0.6755, "lo": 0.6626, "hi": 0.6899, "oc": 0.2451, "raw": 0.7326, "graded": 2214, "n": 2244}, {"id": "d1-2b", "name": "d1-2B", "url": "https://huggingface.co/LiquidAI/d1-2B", "type": "VLM", "source": "maintainers", "params": 1.9, "note": "", "pink": 0.5384, "lo": 0.5213, "hi": 0.5548, "oc": 0.2634, "raw": 0.6106, "graded": 2240, "n": 2244}, {"id": "deepseek-ocr-2", "name": "DeepSeek-OCR-2", "url": "https://huggingface.co/deepseek-ai/DeepSeek-OCR-2", "type": "OCR", "source": "maintainers", "params": 3.4, "note": "", "pink": 0.5318, "lo": 0.5163, "hi": 0.5468, "oc": 0.2193, "raw": 0.5918, "graded": 2244, "n": 2244}]}, {"id": "gpt-5", "label": "GPT-5", "sub": "paper, Table 1", "desc": "The paper's main results: GPT-5 (reasoning effort medium) as the judge, on all 2,244 FERMAT samples.", "notes": ["The printed Table 1 swaps the two Pixtral PINK values; these are the correct ones.", "As in the paper, samples the judge could not grade are left out for these rows."], "rows": [{"id": "gemini-2.5-flash", "name": "Gemini 2.5 Flash", "url": null, "type": "VLM", "source": "paper", "params": null, "note": "API", "pink": 0.9347, "lo": 0.9299, "hi": 0.9395, "oc": 0.5926, "raw": 1.0277, "graded": 2241, "n": 2244}, {"id": "qwen2.5-vl-72b", "name": "Qwen2.5-VL-72B", "url": "https://huggingface.co/Qwen/Qwen2.5-VL-72B-Instruct", "type": "VLM", "source": "paper", "params": 73.4, "note": "", "pink": 0.9203, "lo": 0.9145, "hi": 0.9263, "oc": 0.6573, "raw": 1.0978, "graded": 2244, "n": 2244}, {"id": "qwen2.5-vl-32b", "name": "Qwen2.5-VL-32B", "url": "https://huggingface.co/Qwen/Qwen2.5-VL-32B-Instruct", "type": "VLM", "source": "paper", "params": 33.5, "note": "", "pink": 0.919, "lo": 0.913, "hi": 0.925, "oc": 0.6622, "raw": 1.0949, "graded": 2244, "n": 2244}, {"id": "ovis2-34b", "name": "Ovis2-34B", "url": "https://huggingface.co/AIDC-AI/Ovis2-34B", "type": "VLM", "source": "paper", "params": 34.9, "note": "", "pink": 0.9165, "lo": 0.9105, "hi": 0.9223, "oc": 0.6252, "raw": 1.0514, "graded": 2244, "n": 2244}, {"id": "internvl3-78b", "name": "InternVL3-78B", "url": "https://huggingface.co/OpenGVLab/InternVL3-78B", "type": "VLM", "source": "paper", "params": 78.4, "note": "", "pink": 0.9105, "lo": 0.9042, "hi": 0.9165, "oc": 0.5849, "raw": 1.014, "graded": 2243, "n": 2244}, {"id": "gpt-4o", "name": "GPT-4o", "url": null, "type": "VLM", "source": "paper", "params": null, "note": "API", "pink": 0.9075, "lo": 0.9004, "hi": 0.9142, "oc": 0.6225, "raw": 1.0511, "graded": 2244, "n": 2244}, {"id": "internvl3-38b", "name": "InternVL3-38B", "url": "https://huggingface.co/OpenGVLab/InternVL3-38B", "type": "VLM", "source": "paper", "params": 38.4, "note": "", "pink": 0.9054, "lo": 0.8987, "hi": 0.9119, "oc": 0.5879, "raw": 1.0113, "graded": 2242, "n": 2244}, {"id": "ovis2-8b", "name": "Ovis2-8B", "url": "https://huggingface.co/AIDC-AI/Ovis2-8B", "type": "VLM", "source": "paper", "params": 8.9, "note": "", "pink": 0.8874, "lo": 0.8799, "hi": 0.8949, "oc": 0.5357, "raw": 0.9629, "graded": 2244, "n": 2244}, {"id": "internvl3-8b", "name": "InternVL3-8B", "url": "https://huggingface.co/OpenGVLab/InternVL3-8B", "type": "VLM", "source": "paper", "params": 7.9, "note": "", "pink": 0.8732, "lo": 0.8647, "hi": 0.8808, "oc": 0.5076, "raw": 0.9379, "graded": 2244, "n": 2244}, {"id": "pixtral-large", "name": "Pixtral-Large", "url": "https://huggingface.co/mistralai/Pixtral-Large-Instruct-2411", "type": "VLM", "source": "paper", "params": 124.0, "note": "", "pink": 0.8495, "lo": 0.8398, "hi": 0.8583, "oc": 0.5609, "raw": 0.973, "graded": 2243, "n": 2244}, {"id": "qwen2.5-vl-7b", "name": "Qwen2.5-VL-7B", "url": "https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct", "type": "VLM", "source": "paper", "params": 8.3, "note": "", "pink": 0.8319, "lo": 0.8202, "hi": 0.8437, "oc": 0.5461, "raw": 0.9102, "graded": 2243, "n": 2244}, {"id": "llama-3.2-90b-vision", "name": "Llama-3.2-90B-Vision", "url": "https://huggingface.co/meta-llama/Llama-3.2-90B-Vision-Instruct", "type": "VLM", "source": "paper", "params": 88.6, "note": "", "pink": 0.8145, "lo": 0.8035, "hi": 0.825, "oc": 0.5013, "raw": 0.902, "graded": 2244, "n": 2244}, {"id": "gpt-4o-mini", "name": "GPT-4o mini", "url": null, "type": "VLM", "source": "paper", "params": null, "note": "API", "pink": 0.7871, "lo": 0.7748, "hi": 0.799, "oc": 0.496, "raw": 0.8817, "graded": 2244, "n": 2244}, {"id": "pixtral-12b", "name": "Pixtral-12B", "url": "https://huggingface.co/mistralai/Pixtral-12B-2409", "type": "VLM", "source": "paper", "params": 12.4, "note": "", "pink": 0.7217, "lo": 0.7089, "hi": 0.7352, "oc": 0.4389, "raw": 0.8013, "graded": 2244, "n": 2244}, {"id": "llama-3.2-11b-vision", "name": "Llama-3.2-11B-Vision", "url": "https://huggingface.co/meta-llama/Llama-3.2-11B-Vision-Instruct", "type": "VLM", "source": "paper", "params": 10.7, "note": "", "pink": 0.6762, "lo": 0.662, "hi": 0.6906, "oc": 0.4211, "raw": 0.7582, "graded": 2244, "n": 2244}]}]};   // {updated, tabs: [{id, label, sub, desc, rows|null, notes}]}, refreshed from the live leaderboard below
+const LIVE = "https://codeworker-pink-leaderboard.static.hf.space/leaderboard.json";
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const bar = (v, lo, hi, w) => Math.max(4, Math.round((v - lo) / (hi - lo) * w));
+
+function sizeBand(p) { if (p == null) return "API"; return p <= 4 ? "≤ 4B" : p <= 10 ? "4–10B" : p <= 40 ? "10–40B" : "> 40B"; }
+const FILTERS = [["All", () => true], ["General VLMs", r => r.type === "VLM"], ["OCR models", r => r.type === "OCR"],
+  ["≤ 4B", r => sizeBand(r.params) === "≤ 4B"], ["4–10B", r => sizeBand(r.params) === "4–10B"],
+  ["10–40B", r => sizeBand(r.params) === "10–40B"], ["> 40B / API", r => ["> 40B", "API"].includes(sizeBand(r.params))]];
+let current = 0;
+let tab = Math.max(0, LB.tabs.findIndex(t => t.rows));   // the closest-to-GPT-5 tab is first; fall back while it is pending
+let touched = false;
+function renderTabs() {
+  const host = document.querySelector(".tabs");
+  host.innerHTML = LB.tabs.map((t, i) => `<button class="tab" type="button" role="tab" aria-selected="${i === tab}" data-t="${i}">` +
+    `<b>${esc(t.label)}</b><span>${esc(t.sub)}${t.rows ? "" : " · grading"}</span></button>`).join("");
+  host.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => { tab = +b.dataset.t; current = 0; touched = true; renderTabs(); renderLB(); }));
+  document.getElementById("lb-desc").textContent = LB.tabs[tab].desc;
+}
+function renderLB() {
+  const host = document.getElementById("lb"), T = LB.tabs[tab];
+  if (!T.rows) {
+    host.innerHTML = `<div class="status"><span class="dot"></span><b>Re-grading every model with Qwen3.8-27B is running.</b>
+      <p class="small muted" style="margin:8px 0 0">This tab fills in when all models are graded. The other tabs show the same models with the Qwen3-Next-80B judge and the paper's GPT-5 results.</p></div>`;
+    return;
+  }
+  const rows = T.rows.filter(FILTERS[current][1]).sort((a, b) => b.pink - a.pink);
+  const lo = Math.min(...T.rows.map(r => r.pink)) - 0.02, hi = Math.max(...T.rows.map(r => r.pink));
+  host.innerHTML = `<div class="controls" role="group" aria-label="Filter models">` +
+    FILTERS.map((f, i) => `<button class="chip" type="button" aria-pressed="${i === current}" data-i="${i}">${f[0]}</button>`).join("") + `</div>` +
+    `<div class="tbl-wrap"><table aria-label="Leaderboard"><thead><tr><th>#</th><th>Model</th><th class="num">Params</th><th>PINK ↑</th><th>95% CI</th><th>Over-correction</th><th class="num">Raw</th></tr></thead><tbody>` +
+    rows.map((r, i) => {
+      const name = r.url ? `<a href="${esc(r.url)}">${esc(r.name)}</a>` : esc(r.name);
+      const tag = r.source === "paper" ? `<span class="tag paper">paper</span>` : r.type === "OCR" ? `<span class="tag ocr">OCR</span>` : "";
+      const p = r.params == null ? "API" : r.params >= 1 ? r.params.toFixed(1) + "B" : Math.round(r.params * 1000) + "M";
+      return `<tr><td>${i + 1}</td><td>${name}${tag}${r.note ? ` <span class="muted small">${esc(r.note)}</span>` : ""}</td><td class="num">${p}</td>` +
+        `<td><div class="barcell"><span class="v">${r.pink.toFixed(3)}</span><span class="b" style="width:${bar(r.pink, lo, hi, 120)}px"></span></div></td>` +
+        `<td class="muted">${r.lo.toFixed(3)}–${r.hi.toFixed(3)}</td>` +
+        `<td><span class="oc"><span>${(r.oc * 100).toFixed(1)}%</span><span class="b" style="width:${Math.round(r.oc * 100)}px"></span></span></td>` +
+        `<td class="num">${r.raw.toFixed(3)}</td></tr>`;
+    }).join("") + (rows.length ? "" : `<tr><td colspan="7" class="muted">No model in this group for this judge.</td></tr>`) +
+    `</tbody></table></div>` +
+    `<ul class="notes" style="margin-top:12px">${T.notes.map(n => `<li>${esc(n)}</li>`).join("")}` +
+    `<li>Over-correction = share of samples with at least one over-corrected rubric component. Raw = score before the penalty, Σ model / Σ oracle. 95% CI: bootstrap over samples.</li></ul>`;
+  host.querySelectorAll(".chip").forEach(b => b.addEventListener("click", () => { current = +b.dataset.i; renderLB(); }));
+}
+renderTabs();
+renderLB();
+document.querySelectorAll("a[data-tab]").forEach(a => a.addEventListener("click", () => {
+  tab = Math.max(0, LB.tabs.findIndex(t => t.id === a.dataset.tab)); current = 0; touched = true; renderTabs(); renderLB();
+}));
+// The HF Space holds the living leaderboard: show its newer tables when it can be reached (the inline copy is the fallback).
+fetch(LIVE, { cache: "no-cache" }).then(r => r.ok ? r.json() : null).then(d => {
+  if (!d || !Array.isArray(d.tabs) || (d.updated || "") < (LB.updated || "") || JSON.stringify(d) === JSON.stringify(LB)) return;
+  const id = LB.tabs[tab].id;
+  LB = d;
+  tab = Math.max(0, touched ? LB.tabs.findIndex(t => t.id === id) : LB.tabs.findIndex(t => t.rows));
+  document.querySelectorAll(".updated").forEach(e => { e.textContent = "updated " + LB.updated; });
+  renderTabs(); renderLB();
+}).catch(() => {});
+
+document.querySelectorAll(".copy").forEach(btn => btn.addEventListener("click", async () => {
+  const el = document.getElementById(btn.dataset.target);
+  try { await navigator.clipboard.writeText(el.innerText); btn.textContent = "Copied"; }
+  catch (e) { const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected"; }
+  setTimeout(() => { btn.textContent = "Copy"; }, 1600);
+}));
+</script>
+</body>
+</html>
